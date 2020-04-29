@@ -1,2 +1,5 @@
 app
 *.o
+build/
+.idea
+paint.xcodeproj/
