@@ -7,52 +7,14 @@
 #endif
 #include "canvas.h"
 
+#include <stdio.h>
 #include <iostream>
+
+#define LOC(x,y,w) (3*((y)*(w)+(x)))
 
 BEGIN_EVENT_TABLE( Canvas, wxPanel )
   EVT_PAINT(Canvas::paintEvent)
 END_EVENT_TABLE()
-
-Canvas::Canvas(wxFrame *parent) :
-wxPanel(parent) {}
-
-/*
- * Called by the system of by wxWidgets when the panel needs
- * to be redrawn. You can also trigger this call by
- * calling Refresh()/Update().
- */
-void Canvas::paintEvent(wxPaintEvent & evt)
-{
-  wxPaintDC dc(this);
-  render(dc);
-}
-
-/*
- * Here we do the actual rendering. I put it in a separate
- * method so that it can work no matter what type of DC
- * (e.g. wxPaintDC or wxClientDC) is used.
- */
-void Canvas::render(wxDC&  dc)
-{
-  // draw some text
-  dc.DrawText(wxT("Testing"), 40, 60);
-
-  // draw a circle
-  dc.SetBrush(*wxGREEN_BRUSH); // green filling
-  dc.SetPen( wxPen( wxColor(255,0,0), 5 ) ); // 5-pixels-thick red outline
-  dc.DrawCircle( wxPoint(200,100), 25 /* radius */ );
-
-  // draw a rectangle
-  dc.SetBrush(*wxBLUE_BRUSH); // blue filling
-  dc.SetPen( wxPen( wxColor(255,175,175), 10 ) ); // 10-pixels-thick pink outline
-  dc.DrawRectangle( 300, 100, 400, 200 );
-
-  // draw a line
-  dc.SetPen( wxPen( wxColor(0,0,0), 3 ) ); // black line, 3 pixels thick
-  dc.DrawLine( 300, 100, 700, 300 ); // draw line across the rectangle
-
-  // Look at the wxDC docs to learn how to draw other stuff
-}
 
 /* Event handlers to handle toolbar ONCLICK events */
 void Canvas::SetPencil(wxCommandEvent& WXUNUSED(event)) {
@@ -91,4 +53,69 @@ void Canvas::SetLasso(wxCommandEvent& WXUNUSED(event)) {
   toolType = Lasso;
   std::cout << "Lasso" << std::endl;
 }
+
+Canvas::Canvas(wxFrame *parent) :
+wxPanel(parent) {}
+
+Canvas::Canvas(wxFrame *parent, unsigned int width, unsigned int height) :
+wxPanel(parent) {
+  this->width = width;
+  this->height = height;
+
+  /* Initialize the buffer */
+  size_t sz = 3*width*height*sizeof(char);
+  Buffer = (char *)malloc(sz);
+
+  /* White-out buffer */
+  memset(Buffer, 255, sz);
+}
+
+void Canvas::addTransaction(Transaction &t) {
+  transactions.push_back(&t);
+}
+
+void Canvas::updateBuffer(const Pixel &p) {
+  /* Update buffer with new colors */
+  int i = LOC(p.x, p.y, width);
+  Buffer[i] = p.color.r;
+  Buffer[i+1] = p.color.g;
+  Buffer[i+2] = p.color.b;
+}
+
+/*
+ * Called by the system of by wxWidgets when the panel needs
+ * to be redrawn. You can also trigger this call by
+ * calling Refresh()/Update().
+ */
+void Canvas::paintEvent(wxPaintEvent & evt)
+{
+  wxPaintDC dc(this);
+  render(dc);
+}
+
+/*
+ * Here we do the actual rendering. I put it in a separate
+ * method so that it can work no matter what type of DC
+ * (e.g. wxPaintDC or wxClientDC) is used.
+ */
+void Canvas::render(wxDC&  dc)
+{
+  /*
+   * Draw out the bitmap
+   */
+  
+  ////////////////////////////////////
+  int i,j;
+  i=height/2;
+  for (j=0; j<width; j++) {
+    Pixel p(0, 0, 0, j, i);
+    updateBuffer(p);
+  }
+
+  wxImage img(width, height, (unsigned char *)Buffer, true);
+  wxBitmap bmp(img);  
+  dc.DrawBitmap(bmp, 0, 0, false);
+  ///////////////////////////////////
+}
+
 

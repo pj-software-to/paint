@@ -5,6 +5,8 @@
 #ifndef PAINT_CANVAS_H
 #define PAINT_CANVAS_H
 
+#include "transaction.h"
+
 enum ToolType
 {
   Pencil,
@@ -19,8 +21,23 @@ enum ToolType
 };
 
 class Canvas : public wxPanel {
+  private:
+    unsigned int width;
+    unsigned int height;
+
+    /* This is the main buffer that is drawn to the screen */
+    char *Buffer;
+    std::vector<Transaction *> transactions;
+    
+    /*
+     * Private functions
+     */
+    void updateBuffer(const Pixel &p);
+    void addTransaction(Transaction &t);
+
   public:
     Canvas(wxFrame *parent);
+    Canvas(wxFrame *parent, unsigned int width, unsigned int height);
     ToolType toolType;
 
     void paintEvent(wxPaintEvent & evt);

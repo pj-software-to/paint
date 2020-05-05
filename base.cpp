@@ -3,8 +3,13 @@
 #include <wx/wx.h>
 #endif
 
+#include <string>
 #include "canvas.h"
 #include "base.h"
+
+#define DATA_PATH "data"
+#define DEFAULT_WIDTH 1000 
+#define DEFAULT_HEIGHT 500 
 
 BEGIN_EVENT_TABLE( MainFrame, wxFrame )
 END_EVENT_TABLE()
@@ -16,7 +21,10 @@ bool MainApp::OnInit()
   wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
   frame = new MainFrame(wxT("Hello wxDC"), wxPoint(50,50), wxSize(800,600));
 
-  canvas = new Canvas( (wxFrame*) frame );
+  unsigned int width, height;
+  
+  canvas = new Canvas( (wxFrame*) frame,
+    DEFAULT_WIDTH, DEFAULT_HEIGHT);
   sizer->Add(canvas, 1, wxEXPAND);
 
   frame->SetSizer(sizer);
@@ -31,14 +39,23 @@ MainFrame::MainFrame(const wxString &title,
     const wxSize &size)
     : wxFrame((wxFrame *)NULL, -1, title, pos, size)
 {
+  std::string DPATH(DATA_PATH);
+  std::string exitP = DPATH + "/exit.png";
+  std::string pencilP = DPATH + "/pencil.png";
+  std::string circleP = DPATH + "/circle.png";
+  std::string rectP = DPATH + "/rectangle.png";
+  std::string lineP = DPATH + "/line.png";
+  std::string eraserP = DPATH + "/eraser.png";
+  std::string slctP = DPATH + "/slct_rect.png";
+
   wxImage::AddHandler(new wxPNGHandler);
-  wxBitmap exit(wxT("exit.png"), wxBITMAP_TYPE_PNG);
-  wxBitmap pencil(wxT("pencil.png"), wxBITMAP_TYPE_PNG);
-  wxBitmap circle(wxT("circle.png"), wxBITMAP_TYPE_PNG);
-  wxBitmap rectangle(wxT("rectangle.png"), wxBITMAP_TYPE_PNG);
-  wxBitmap line(wxT("line.png"), wxBITMAP_TYPE_PNG);
-  wxBitmap eraser(wxT("eraser.png"), wxBITMAP_TYPE_PNG);
-  wxBitmap slctRect(wxT("slct_rect.png"), wxBITMAP_TYPE_PNG);
+  wxBitmap exit(wxString(exitP), wxBITMAP_TYPE_PNG);
+  wxBitmap pencil(wxString(pencilP), wxBITMAP_TYPE_PNG);
+  wxBitmap circle(wxString(circleP), wxBITMAP_TYPE_PNG);
+  wxBitmap rectangle(wxString(rectP), wxBITMAP_TYPE_PNG);
+  wxBitmap line(wxString(lineP), wxBITMAP_TYPE_PNG);
+  wxBitmap eraser(wxString(eraserP), wxBITMAP_TYPE_PNG);
+  wxBitmap slctRect(wxString(slctP), wxBITMAP_TYPE_PNG);
 
   toolBar = CreateToolBar(wxTB_VERTICAL);
 
