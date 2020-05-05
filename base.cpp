@@ -38,6 +38,7 @@ MainFrame::MainFrame(const wxString &title,
   wxBitmap rectangle(wxT("rectangle.png"), wxBITMAP_TYPE_PNG);
   wxBitmap line(wxT("line.png"), wxBITMAP_TYPE_PNG);
   wxBitmap eraser(wxT("eraser.png"), wxBITMAP_TYPE_PNG);
+  wxBitmap slctRect(wxT("slct_rect.png"), wxBITMAP_TYPE_PNG);
 
   toolBar = CreateToolBar(wxTB_VERTICAL);
 
@@ -52,7 +53,7 @@ MainFrame::MainFrame(const wxString &title,
   toolBar->AddTool(BTN_Fill, wxT("Fill"), exit);
 
   /* Selection Tools */
-  toolBar->AddTool(BTN_Slct_rect, wxT("Select Rectangle"), exit);
+  toolBar->AddTool(BTN_Slct_rect, wxT("Select Rectangle"), slctRect);
   toolBar->AddTool(BTN_Slct_circ, wxT("Select Circle"), exit);
   toolBar->AddTool(BTN_Slct_lasso, wxT("Lasso"), exit);
 
