@@ -6,6 +6,7 @@
 #define PAINT_CANVAS_H
 
 #include "transaction.h"
+#include "pixel.h"
 
 enum ToolType
 {
@@ -25,6 +26,9 @@ class Canvas : public wxPanel {
     unsigned int width;
     unsigned int height;
 
+    Color color;
+    wxPoint prevCoord;
+
     /* This is the main buffer that is drawn to the screen */
     char *Buffer;
     std::vector<Transaction *> transactions;
@@ -42,6 +46,10 @@ class Canvas : public wxPanel {
 
     void paintEvent(wxPaintEvent & evt);
     void paintNow();
+
+    void mouseDown(wxMouseEvent & evt);
+    void mouseMoved(wxMouseEvent & evt);
+    void mouseReleased(wxMouseEvent & evt);
 
     void SetPencil(wxCommandEvent& WXUNUSED(event));
     void SetDrawLine(wxCommandEvent& WXUNUSED(event));
