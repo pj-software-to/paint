@@ -41,12 +41,14 @@ MainFrame::MainFrame(const wxString &title,
 {
   std::string DPATH(DATA_PATH);
   std::string exitP = DPATH + "/exit.png";
-  std::string pencilP = DPATH + "/pencil.png";
+  std::string pencilP = DPATH + "/pencil1.png";
   std::string circleP = DPATH + "/circle.png";
   std::string rectP = DPATH + "/rectangle.png";
   std::string lineP = DPATH + "/line.png";
   std::string eraserP = DPATH + "/eraser.png";
-  std::string slctP = DPATH + "/slct_rect.png";
+  std::string slctRectP = DPATH + "/slct_rect.png";
+  std::string slctCircleP = DPATH + "/slct_circle.png";
+  std::string lassoP = DPATH + "/lasso.png";
 
   wxImage::AddHandler(new wxPNGHandler);
   wxBitmap exit(wxString(exitP), wxBITMAP_TYPE_PNG);
@@ -55,24 +57,26 @@ MainFrame::MainFrame(const wxString &title,
   wxBitmap rectangle(wxString(rectP), wxBITMAP_TYPE_PNG);
   wxBitmap line(wxString(lineP), wxBITMAP_TYPE_PNG);
   wxBitmap eraser(wxString(eraserP), wxBITMAP_TYPE_PNG);
-  wxBitmap slctRect(wxString(slctP), wxBITMAP_TYPE_PNG);
+  wxBitmap slctRect(wxString(slctRectP), wxBITMAP_TYPE_PNG);
+  wxBitmap slctCircle(wxString(slctCircleP), wxBITMAP_TYPE_PNG);
+  wxBitmap lasso(wxString(lassoP), wxBITMAP_TYPE_PNG);
 
   toolBar = CreateToolBar(wxTB_VERTICAL);
 
-  /* Drawing Tools */
+  /* Freehand Drawing Tools */
   toolBar->AddTool(BTN_Pencil, wxT("Pencil"), pencil);
+  toolBar->AddTool(BTN_Eraser, wxT("Eraser"), eraser);
+  toolBar->AddTool(BTN_Fill, wxT("Fill"), exit);
+
+  /* Predefined Shapes */
   toolBar->AddTool(BTN_Draw_line, wxT("Line"), line);
   toolBar->AddTool(BTN_Draw_rect, wxT("Rectangle"), rectangle);
   toolBar->AddTool(BTN_Draw_circ, wxT("Circle"), circle);
 
-  /* Misc */
-  toolBar->AddTool(BTN_Eraser, wxT("Eraser"), eraser);
-  toolBar->AddTool(BTN_Fill, wxT("Fill"), exit);
-
   /* Selection Tools */
   toolBar->AddTool(BTN_Slct_rect, wxT("Select Rectangle"), slctRect);
-  toolBar->AddTool(BTN_Slct_circ, wxT("Select Circle"), exit);
-  toolBar->AddTool(BTN_Slct_lasso, wxT("Lasso"), exit);
+  toolBar->AddTool(BTN_Slct_circ, wxT("Select Circle"), slctCircle);
+  toolBar->AddTool(BTN_Slct_lasso, wxT("Lasso"), lasso);
 
   /* Render */
   toolBar->Realize();
