@@ -130,23 +130,17 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
 
   int x=evt.GetX();
   int y=evt.GetY();
-  std::vector<wxPoint> points =
-      linearInterpolation(prevPos, wxPoint(x, y));
 
-  Pixel p;
-  wxPoint point;
   int i;
   switch(toolType) {
     case Pencil:
-      for (i=0; i<points.size(); i++) {
-        point = points[i];
-        p = Pixel(color.r, color.g, color.b, point.x, point.y);
-        updateBuffer(p);
-      }
+      handlePencilMouseMove(x, y);
+      break;
     case Line:
+      break;
     case DrawRect:
+      break;
     case DrawCircle:
-      wxWindow::Refresh();
       break;
     case Eraser:
       break;
@@ -166,5 +160,21 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
 
 void Canvas::mouseReleased(wxMouseEvent &evt)
 {
+
+}
+
+void Canvas::handlePencilMouseMove(const int &x, const int &y) {
+  std::vector<wxPoint> points =
+      linearInterpolation(prevPos, wxPoint(x, y));
+
+  Pixel p;
+  wxPoint point;
+  int i;
+  for (i=0; i<points.size(); i++) {
+    point = points[i];
+    p = Pixel(color.r, color.g, color.b, point.x, point.y);
+    updateBuffer(p);
+  }
+  wxWindow::Refresh();
 }
 

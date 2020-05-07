@@ -41,7 +41,7 @@ class Canvas : public wxPanel {
      * taking place.
      * There should only be ONE txn occuring
      * at a time */
-    Transaction currentTxn;
+    Transaction *currentTxn;
 
     /* This is the main buffer that is drawn to the screen */
     char *Buffer;
@@ -52,6 +52,8 @@ class Canvas : public wxPanel {
      */
     void updateBuffer(const Pixel &p);
     void addTransaction(Transaction &t);
+
+    void handlePencilMouseMove(const int &x, const int &y);
 
   public:
     Canvas(wxFrame *parent);
