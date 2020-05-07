@@ -54,6 +54,7 @@ class Canvas : public wxPanel {
     void updateBuffer(const std::vector<wxPoint> &points, const Color &color); 
     void updateBuffer(const Pixel &p);
     void addTransaction(Transaction &t);
+
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
   public:
     Canvas(wxFrame *parent);
