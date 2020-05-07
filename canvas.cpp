@@ -21,10 +21,12 @@ BEGIN_EVENT_TABLE( Canvas, wxPanel )
   EVT_LEFT_UP(Canvas::mouseReleased)
 END_EVENT_TABLE()
 
+Color WHITE = Color((char) 255, (char) 255, (char) 255);
+
 /* CONSTRUCTORS */
 Canvas::Canvas(wxFrame *parent) :
 wxPanel(parent) {
-  color.set(0, 0, 0);
+  color = Color(0, 0, 0);
 }
 
 Canvas::Canvas(wxFrame *parent, unsigned int width, unsigned int height) :
@@ -32,7 +34,7 @@ wxPanel(parent) {
   this->width = width;
   this->height = height;
 
-  color.set(0, 0, 0);
+  color = Color(0, 0, 0);
 
   /* Initialize the buffer */
   size_t sz = 3*width*height*sizeof(char);
@@ -123,6 +125,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
       updateBuffer(p);
       break;
     case Eraser:
+      updateBuffer(Pixel((char) 255, (char)255, (char)255, x, y));
       break;
     case Fill:
       break;
@@ -163,6 +166,9 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       currentTxn = txn;
       break;
     case Eraser:
+      updateBuffer(
+          linearInterpolation(prevPos, currPos),
+          WHITE);
       break;
     case Fill:
       break;
