@@ -23,6 +23,7 @@ enum ToolType
 
 class Canvas : public wxPanel {
   private:
+    /* In pixels */
     unsigned int width;
     unsigned int height;
 
@@ -50,9 +51,10 @@ class Canvas : public wxPanel {
     /*
      * Private functions
      */
+    void updateBuffer(const std::vector<wxPoint> &points, const Color &color); 
     void updateBuffer(const Pixel &p);
     void addTransaction(Transaction &t);
-
+    std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
   public:
     Canvas(wxFrame *parent);
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);
