@@ -3,7 +3,8 @@
 
 class Color {
   public:
-    inline void set(char r, char g, char b);
+    inline Color();
+    inline Color(char r, char g, char b);
     char r;
     char g;
     char b;
@@ -28,7 +29,9 @@ inline Pixel::Pixel(char r, char g, char b, wxCoord x, wxCoord y) {
   this->y = y;
 }
 
-inline void Color::set(char r, char g, char b) {
+inline Color::Color() {}
+
+inline Color::Color(char r, char g, char b) {
   this->r = r;
   this->g = g;
   this->b = b;

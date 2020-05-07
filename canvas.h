@@ -51,7 +51,7 @@ class Canvas : public wxPanel {
     /*
      * Private functions
      */
-    void updateBuffer(const std::vector<wxPoint> &points, const Color &color); 
+    void updateBuffer(const std::vector<wxPoint> &points, const Color &color);
     void updateBuffer(const Pixel &p);
     void addTransaction(Transaction &t);
 
