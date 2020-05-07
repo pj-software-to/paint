@@ -42,6 +42,7 @@ MainFrame::MainFrame(const wxString &title,
     const wxSize &size)
     : wxFrame((wxFrame *)NULL, -1, title, pos, size)
 {
+  /* Create sidebar with tools */
   std::string DPATH(DATA_PATH);
   std::string exitP = DPATH + "/exit.png";
   std::string pencilP = DPATH + "/pencil1.png";
@@ -84,6 +85,7 @@ MainFrame::MainFrame(const wxString &title,
   /* Render */
   toolBar->Realize();
 
+  /* Set event handlers for each button */
   Connect(BTN_Pencil, wxEVT_COMMAND_TOOL_CLICKED,
       wxCommandEventHandler(MainApp::SetCanvasPencil));
   Connect(BTN_Draw_line, wxEVT_COMMAND_TOOL_CLICKED,

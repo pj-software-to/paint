@@ -26,8 +26,22 @@ class Canvas : public wxPanel {
     unsigned int width;
     unsigned int height;
 
+    /* The colour selected by the user */
     Color color;
-    wxPoint prevCoord;
+
+    /* The previous mouse position
+     * before mouse move event */
+    wxPoint prevPos;
+
+    /* The mouse position where the user first
+     * clicked the left mouse button*/
+    wxPoint startPos;
+
+    /* Holds the transaction currently
+     * taking place.
+     * There should only be ONE txn occuring
+     * at a time */
+    Transaction currentTxn;
 
     /* This is the main buffer that is drawn to the screen */
     char *Buffer;
@@ -44,9 +58,11 @@ class Canvas : public wxPanel {
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);
     ToolType toolType;
 
+    /* Screen refresh event handlers */
     void paintEvent(wxPaintEvent & evt);
     void paintNow();
 
+    /* Mouse event handlers */
     void mouseDown(wxMouseEvent & evt);
     void mouseMoved(wxMouseEvent & evt);
     void mouseReleased(wxMouseEvent & evt);

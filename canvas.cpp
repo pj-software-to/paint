@@ -49,6 +49,9 @@ void Canvas::addTransaction(Transaction &t) {
 void Canvas::updateBuffer(const Pixel &p) {
   /* Update buffer with new colors */
   int i = LOC(p.x, p.y, width);
+  if (i >= 3 * width * height)
+    return;
+
   Buffer[i] = p.color.r;
   Buffer[i+1] = p.color.g;
   Buffer[i+2] = p.color.b;
@@ -77,13 +80,6 @@ void Canvas::render(wxDC&  dc)
    */
   
   ////////////////////////////////////
-  int i,j;
-  i=height/2;
-  for (j=0; j<width; j++) {
-    Pixel p(0, 0, 0, j, i);
-    updateBuffer(p);
-  }
-
   wxImage img(width, height, (unsigned char *)Buffer, true);
   wxBitmap bmp(img);  
   dc.DrawBitmap(bmp, 0, 0, false);
@@ -94,13 +90,14 @@ void Canvas::render(wxDC&  dc)
 /*
  * Handle CLICK event
  * Drawing Tools: Pencil, Line, DrawRect, DrawCircle
- *    - Fill in the clicked pixel
+ *    - Fill in the clicked pixel - all have the same functionality
  */
 void Canvas::mouseDown(wxMouseEvent &evt)
 {
   int x = evt.GetX();
   int y = evt.GetY();
-  prevCoord = wxPoint(x, y);
+  prevPos = wxPoint(x, y);
+  startPos = wxPoint(x, y);
 
   Pixel p(color.r, color.g, color.b, x, y);
   switch(toolType) {
@@ -134,7 +131,7 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
   int x=evt.GetX();
   int y=evt.GetY();
   std::vector<wxPoint> points =
-      linearInterpolation(prevCoord, wxPoint(x, y));
+      linearInterpolation(prevPos, wxPoint(x, y));
 
   Pixel p;
   wxPoint point;
@@ -164,8 +161,7 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
     default:
       break;
   }
-
-  prevCoord = wxPoint(x, y);
+  prevPos = wxPoint(x, y);
 }
 
 void Canvas::mouseReleased(wxMouseEvent &evt)
