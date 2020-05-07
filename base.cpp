@@ -4,11 +4,12 @@
 #endif
 
 #include <string>
+#include <iostream>
 #include "canvas.h"
 #include "base.h"
 
 #define DATA_PATH "data"
-#define DEFAULT_WIDTH 1000 
+#define DEFAULT_WIDTH 1000
 #define DEFAULT_HEIGHT 500 
 
 BEGIN_EVENT_TABLE( MainFrame, wxFrame )
@@ -26,6 +27,8 @@ bool MainApp::OnInit()
   canvas = new Canvas( (wxFrame*) frame,
     DEFAULT_WIDTH, DEFAULT_HEIGHT);
   sizer->Add(canvas, 1, wxEXPAND);
+
+  canvas->toolType = Pencil;
 
   frame->SetSizer(sizer);
   frame->SetAutoLayout(true);
@@ -82,21 +85,58 @@ MainFrame::MainFrame(const wxString &title,
   toolBar->Realize();
 
   Connect(BTN_Pencil, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetPencil));
+      wxCommandEventHandler(MainApp::SetCanvasPencil));
   Connect(BTN_Draw_line, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetDrawLine));
+      wxCommandEventHandler(MainApp::SetCanvasDrawLine));
   Connect(BTN_Draw_rect, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetDrawRect));
+      wxCommandEventHandler(MainApp::SetCanvasDrawRect));
   Connect(BTN_Draw_circ, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetDrawCircle));
+      wxCommandEventHandler(MainApp::SetCanvasDrawCircle));
   Connect(BTN_Eraser, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetEraser));
+      wxCommandEventHandler(MainApp::SetCanvasEraser));
   Connect(BTN_Fill, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetFill));
+      wxCommandEventHandler(MainApp::SetCanvasFill));
   Connect(BTN_Slct_rect, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetSlctRect));
+      wxCommandEventHandler(MainApp::SetCanvasSlctRect));
   Connect(BTN_Slct_circ, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetSlctCircle));
+      wxCommandEventHandler(MainApp::SetCanvasSlctCircle));
   Connect(BTN_Slct_lasso, wxEVT_COMMAND_TOOL_CLICKED,
-      wxCommandEventHandler(Canvas::SetLasso));
+      wxCommandEventHandler(MainApp::SetCanvasLasso));
+}
+
+/*********** Event handlers to handle ONCLICK events for toolbar ************/
+void MainApp::SetCanvasPencil(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = Pencil;
+}
+
+void MainApp::SetCanvasDrawLine(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = Line;
+}
+
+void MainApp::SetCanvasDrawRect(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = DrawRect;
+}
+
+void MainApp::SetCanvasDrawCircle(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = DrawCircle;
+}
+
+void MainApp::SetCanvasEraser(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = Eraser;
+}
+
+void MainApp::SetCanvasFill(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = Fill;
+}
+
+void MainApp::SetCanvasSlctRect(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = SlctRect;
+}
+
+void MainApp::SetCanvasSlctCircle(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = SlctCircle;
+}
+
+void MainApp::SetCanvasLasso(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->toolType = Lasso;
 }

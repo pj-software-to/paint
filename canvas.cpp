@@ -21,44 +21,6 @@ BEGIN_EVENT_TABLE( Canvas, wxPanel )
   EVT_LEFT_UP(Canvas::mouseReleased)
 END_EVENT_TABLE()
 
-/* Event handlers to handle toolbar ONCLICK events */
-void Canvas::SetPencil(wxCommandEvent& WXUNUSED(event)) {
-  toolType = Pencil;
-  std::cout << "Pencil" << std::endl;
-}
-void Canvas::SetDrawLine(wxCommandEvent& WXUNUSED(event)) {
-  toolType = Line;
-  std::cout << "Line" << std::endl;
-}
-void Canvas::SetDrawRect(wxCommandEvent& WXUNUSED(event)) {
-  toolType = DrawRect;
-  std::cout << "Draw Rectangle" << std::endl;
-}
-void Canvas::SetDrawCircle(wxCommandEvent& WXUNUSED(event)) {
-  toolType = DrawCircle;
-  std::cout << "Draw Circle" << std::endl;
-}
-void Canvas::SetEraser(wxCommandEvent& WXUNUSED(event)) {
-  toolType = Eraser;
-  std::cout << "Eraser" << std::endl;
-}
-void Canvas::SetFill(wxCommandEvent& WXUNUSED(event)) {
-  toolType = Fill;
-  std::cout << "Fill" << std::endl;
-}
-void Canvas::SetSlctRect(wxCommandEvent& WXUNUSED(event)) {
-  toolType = SlctRect;
-  std::cout << "Select Rectangle" << std::endl;
-}
-void Canvas::SetSlctCircle(wxCommandEvent& WXUNUSED(event)) {
-  toolType = SlctCircle;
-  std::cout << "Select Circle" << std::endl;
-}
-void Canvas::SetLasso(wxCommandEvent& WXUNUSED(event)) {
-  toolType = Lasso;
-  std::cout << "Lasso" << std::endl;
-}
-
 /* CONSTRUCTORS */
 Canvas::Canvas(wxFrame *parent) :
 wxPanel(parent) {

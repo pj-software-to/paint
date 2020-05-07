@@ -16,6 +16,16 @@ class MainApp: public wxApp {
     virtual bool OnInit();
     MainFrame *frame;
     Canvas *canvas;
+
+    void SetCanvasPencil(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasDrawLine(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasDrawRect(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasDrawCircle(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasEraser(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasFill(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasSlctRect(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasSlctCircle(wxCommandEvent& WXUNUSED(event));
+    void SetCanvasLasso(wxCommandEvent& WXUNUSED(event));
 };
 
 DECLARE_APP(MainApp)
