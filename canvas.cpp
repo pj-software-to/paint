@@ -57,6 +57,18 @@ void Canvas::updateBuffer(const Pixel &p) {
   Buffer[i+2] = p.color.b;
 }
 
+void Canvas::updateBuffer(const std::vector<wxPoint> &points,
+                          const Color &color) {
+  Pixel p;
+  wxPoint point;
+  int i;
+  for (i=0; i<points.size(); i++) {
+    point = points[i];
+    p = Pixel(color.r, color.g, color.b, point.x, point.y);
+    updateBuffer(p);
+  }
+}
+
 /*
  * Called by the system of by wxWidgets when the panel needs
  * to be redrawn. You can also trigger this call by
@@ -94,6 +106,9 @@ void Canvas::render(wxDC&  dc)
  */
 void Canvas::mouseDown(wxMouseEvent &evt)
 {
+  /* Always should be left is down */
+  assert(evt.LeftIsDown());
+
   int x = evt.GetX();
   int y = evt.GetY();
   prevPos = wxPoint(x, y);
@@ -120,6 +135,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
     default:
       break;
   }
+
   wxWindow::Refresh();
 }
 
@@ -128,19 +144,23 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
   if (!evt.LeftIsDown())
     return;
 
-  int x=evt.GetX();
-  int y=evt.GetY();
-
-  int i;
+  wxPoint currPos = wxPoint(evt.GetX(), evt.GetY());
+  Transaction txn;
   switch(toolType) {
     case Pencil:
-      handlePencilMouseMove(x, y);
+      updateBuffer(
+        linearInterpolation(prevPos, currPos),
+        color);
       break;
     case Line:
       break;
     case DrawRect:
       break;
     case DrawCircle:
+      updateBuffer(
+        drawCircle(currPos, txn),
+        color);
+      currentTxn = txn;
       break;
     case Eraser:
       break;
@@ -155,26 +175,17 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
     default:
       break;
   }
-  prevPos = wxPoint(x, y);
+
+  wxWindow::Refresh();
+  prevPos = wxPoint(currPos.x, currPos.y);
 }
 
 void Canvas::mouseReleased(wxMouseEvent &evt)
 {
-
 }
 
-void Canvas::handlePencilMouseMove(const int &x, const int &y) {
-  std::vector<wxPoint> points =
-      linearInterpolation(prevPos, wxPoint(x, y));
+std::vector<wxPoint> Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
+  std::vector<wxPoint> points;
 
-  Pixel p;
-  wxPoint point;
-  int i;
-  for (i=0; i<points.size(); i++) {
-    point = points[i];
-    p = Pixel(color.r, color.g, color.b, point.x, point.y);
-    updateBuffer(p);
-  }
-  wxWindow::Refresh();
+  return points;
 }
-

@@ -23,6 +23,7 @@ enum ToolType
 
 class Canvas : public wxPanel {
   private:
+    /* In pixels */
     unsigned int width;
     unsigned int height;
 
@@ -41,7 +42,7 @@ class Canvas : public wxPanel {
      * taking place.
      * There should only be ONE txn occuring
      * at a time */
-    Transaction *currentTxn;
+    Transaction currentTxn;
 
     /* This is the main buffer that is drawn to the screen */
     char *Buffer;
@@ -50,11 +51,10 @@ class Canvas : public wxPanel {
     /*
      * Private functions
      */
+    void updateBuffer(const std::vector<wxPoint> &points, const Color &color);
     void updateBuffer(const Pixel &p);
     void addTransaction(Transaction &t);
-
-    void handlePencilMouseMove(const int &x, const int &y);
-
+    std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
   public:
     Canvas(wxFrame *parent);
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);
