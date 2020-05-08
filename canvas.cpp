@@ -222,11 +222,16 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
   std::vector<wxPoint> points;
   /*
    * Steps:
-   * (1) If not first transaction, delete previous transaction
-   * (2) Interpolate some points such that the interpolated points
-   *     form a circle by using distance b/w currPos and startPos
-   * (3) Further interpolate by calling either linear or polynomial
-   *     interpolation on the sparse points to generate the pixels.
+   * (1) If not first transaction, delete previous transaction.
+   *     We must do this since we're constantly redrawing
+   *     the circle's trace as the user is "dragging" across
+   *     the screen 
+   * (2) Interpolate some points such that the interpolated
+   *     points form a circle by using distance b/w currPos
+   *     and startPos
+   * (3) Further interpolate by calling either linear or
+   *     polynomial interpolation on the sparse points to
+   *     generate the pixels
    * (4) Write all previous buffer values to the txn
    */  
 
@@ -255,7 +260,7 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
 
   /*
    * Number of samples depends on the circumference
-   * of the circuit
+   * of the circle
    */ 
   std::vector<wxPoint> draft;
   {
@@ -302,22 +307,3 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
 
   return points;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
