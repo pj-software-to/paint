@@ -179,12 +179,17 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
   switch(toolType) {
     case Pencil:
       updateBuffer(
-        drawFreeHand(prevPos, currPos, currentTxn),
+        drawFreeHand(prevPos, currPos, txn),
         color);
+      currentTxn = txn;
       break;
     case Line:
       break;
     case DrawRect:
+      updateBuffer(
+          drawRectangle(startPos, currPos, txn),
+          color);
+      currentTxn = txn;
       break;
     case DrawCircle:
       updateBuffer(
@@ -224,14 +229,7 @@ Canvas::drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
   std::vector<wxPoint> points =
       linearInterpolation(p0, p1);
 
-  int i=0;
-  wxPoint pt;
-  Pixel p;
-  for (i=0; i < points.size(); i++) {
-    pt = points[i];
-    p = Pixel(getPixelColor(pt), pt);
-    txn.update(p);
-  }
+  updateTxn(txn, points);
   return points;
 }
 
@@ -322,6 +320,62 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
       txn.update(pixel);
     }
   }
+
+  return points;
+}
+
+void
+Canvas::updateTxn(Transaction &txn, const std::vector<wxPoint> &points)
+{
+  int i=0;
+  wxPoint pt;
+  Pixel p;
+  for (i=0; i < points.size(); i++) {
+    pt = points[i];
+    p = Pixel(getPixelColor(pt), pt);
+    txn.update(p);
+  }
+}
+
+std::vector<wxPoint>
+Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
+{
+  /*
+   * Approach:
+   * 1. If isNewTxn is FALSE (i.e. user previously moved the mouse) then
+   *    revert the current Transaction
+   * 2. Get the pixels to fill in by performing linear interpolation on each
+   *    pair of coordinates on the rectangle
+   *      <x0, y0> -> <x1, y1>, <x0, y0> -> <x0, y1>
+   *      <x1, y0> -> <x1, y1>, <x1, y1> -> <x1, y0>
+   * 3. Update currentTxn to include all points from 2.
+   * 4. Return the points
+   */
+  // (1)
+  if (!isNewTxn) {
+    revertTransaction(currentTxn);
+  }
+
+  // (2)
+  std::vector<wxPoint> points;
+
+  {
+    wxPoint p2 = wxPoint(p0.x, p1.y);
+    wxPoint p3 = wxPoint(p1.x, p0.y);
+    std::vector<wxPoint> lines[4];
+
+    lines[0] = linearInterpolation(p0, p3);
+    lines[1] = linearInterpolation(p1, p3);
+    lines[2] = linearInterpolation(p1, p2);
+    lines[3] = linearInterpolation(p0, p2);
+
+    int i;
+    for (i=0; i < 4; i++) {
+      points.insert(points.end(), lines[i].begin(), lines[i].end());
+    }
+  }
+
+  updateTxn(txn, points);
 
   return points;
 }
