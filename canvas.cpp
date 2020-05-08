@@ -61,6 +61,19 @@ void Canvas::revertTransaction(Transaction &txn) {
   }
 }
 
+void
+Canvas::updateTxn(Transaction &txn, const std::vector<wxPoint> &points)
+{
+  int i=0;
+  wxPoint pt;
+  Pixel p;
+  for (i=0; i < points.size(); i++) {
+    pt = points[i];
+    p = Pixel(getPixelColor(pt), pt);
+    txn.update(p);
+  }
+}
+
 Color Canvas::getPixelColor(wxPoint &p) {
   int i = LOC(p.x, p.y, width);
   if (i >= 3 * width * height)
@@ -313,31 +326,8 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
   }
 
   // (4)
-  {
-    Pixel pixel; 
-    wxPoint pt;
-    int i;
-    for (i=0; i<points.size(); i++) {
-      pt = points[i];
-      pixel = Pixel(getPixelColor(pt), pt);
-      txn.update(pixel);
-    }
-  }
-
+  updateTxn(txn, points);
   return points;
-}
-
-void
-Canvas::updateTxn(Transaction &txn, const std::vector<wxPoint> &points)
-{
-  int i=0;
-  wxPoint pt;
-  Pixel p;
-  for (i=0; i < points.size(); i++) {
-    pt = points[i];
-    p = Pixel(getPixelColor(pt), pt);
-    txn.update(p);
-  }
 }
 
 std::vector<wxPoint>
