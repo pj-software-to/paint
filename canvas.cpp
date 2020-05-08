@@ -64,7 +64,7 @@ void Canvas::revertTransaction(Transaction &txn) {
 Color Canvas::getPixelColor(wxPoint &p) {
   int i = LOC(p.x, p.y, width);
   if (i >= 3 * width * height)
-    return Color(255, 255, 255);
+    return WHITE;
 
   return Color(
     Buffer[i],
@@ -148,6 +148,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
     case Line:
     case DrawRect:
     case DrawCircle:
+      currentTxn.update(p);
       updateBuffer(p);
       break;
     case Eraser:
@@ -178,7 +179,7 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
   switch(toolType) {
     case Pencil:
       updateBuffer(
-        linearInterpolation(prevPos, currPos),
+        drawFreeHand(prevPos, currPos, currentTxn),
         color);
       break;
     case Line:
@@ -193,7 +194,7 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       break;
     case Eraser:
       updateBuffer(
-          linearInterpolation(prevPos, currPos),
+          drawFreeHand(prevPos, currPos, currentTxn),
           WHITE);
       break;
     case Fill:
@@ -215,6 +216,23 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
 
 void Canvas::mouseReleased(wxMouseEvent &evt)
 {
+}
+
+std::vector<wxPoint>
+Canvas::drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
+{
+  std::vector<wxPoint> points =
+      linearInterpolation(p0, p1);
+
+  int i=0;
+  wxPoint pt;
+  Pixel p;
+  for (i=0; i < points.size(); i++) {
+    pt = points[i];
+    p = Pixel(getPixelColor(pt), pt);
+    txn.update(p);
+  }
+  return points;
 }
 
 std::vector<wxPoint>
