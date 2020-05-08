@@ -15,6 +15,8 @@
 #include "interpolation.h"
 
 #define LOC(x,y,w) (3*((y)*(w)+(x)))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 BEGIN_EVENT_TABLE( Canvas, wxPanel )
   EVT_PAINT(Canvas::paintEvent)
@@ -24,6 +26,7 @@ BEGIN_EVENT_TABLE( Canvas, wxPanel )
 END_EVENT_TABLE()
 
 Color WHITE = Color((char) 255, (char) 255, (char) 255);
+Color SELECT = Color((char) 32, (char) 82, (char) 133);
 
 /* CONSTRUCTORS */
 Canvas::Canvas(wxFrame *parent) :
@@ -86,13 +89,19 @@ Color Canvas::getPixelColor(wxPoint &p) {
   );
 }
 
+Pixel Canvas::getPixel(wxPoint p) {
+  return Pixel (
+      getPixelColor(p),
+      p);
+}
+
 void Canvas::updateBuffer(const Pixel &p) {
   /* Update buffer with new colors */
   if (p.x >= width || p.y >= height)
     return;
-  
+
   int i = LOC(p.x, p.y, width);
-  if (i >= 3 * width * height)
+  if (i >= 3 * width * height || i < 0)
     return;
 
   Buffer[i] = p.color.r;
@@ -173,6 +182,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
     case Fill:
       break;
     case SlctRect:
+      handleSelectRectClick(startPos);
       break;
     case SlctCircle:
       break;
@@ -219,12 +229,14 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       break;
     case Eraser:
       updateBuffer(
-          drawFreeHand(prevPos, currPos, currentTxn),
+          drawFreeHand(prevPos, currPos, txn),
           WHITE);
+      currentTxn = txn;
       break;
     case Fill:
       break;
     case SlctRect:
+      handleSelectRectMove(startPos, currPos);
       break;
     case SlctCircle:
       break;
@@ -241,6 +253,14 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
 
 void Canvas::mouseReleased(wxMouseEvent &evt)
 {
+  wxPoint pt = wxPoint(evt.GetX(), evt.GetY());
+  switch (toolType) {
+    case SlctRect:
+      handleSelectRectRelease(startPos, pt);
+      break;
+    default:
+      break;
+  }
 }
 
 std::vector<wxPoint>
@@ -393,4 +413,175 @@ Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
   updateTxn(txn, points);
 
   return points;
+}
+
+void
+Canvas::handleSelectRectClick(wxPoint &pt)
+{
+  /*
+   * Two cases to consider:
+   * 1. User doesn't have any current selections
+   *    - Same as DrawRect
+   * 2. User has a selection
+   *    a) If user clicks ON the selection - they can move it
+   *    b) NOT on the selection - have to revert the selectTxn
+   *        (i.e. erase the selection border) -> now the user
+   *        no longer has a selection
+   */
+
+  // Case 1)
+  if (!selected) {
+    Pixel p = Pixel(SELECT, pt);
+    updateBuffer(p);
+    currentTxn.update(p);
+  }
+  else {
+    // Case 2)
+
+  }
+
+}
+
+void
+Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
+{
+  /*
+   * Two cases to consider:
+   * 1. User hasn't made a selection
+   *    - Have to draw the selection border
+   *    - Leverate the drawRectangle() function
+   *    TODO make the border use DASHED lines
+   *
+   * 2. User has a selection
+   *    - Have to move the selected pixels to the
+   *      new position
+   */
+
+
+  if (!selected) {
+    Transaction txn, sTxn;
+    if (!isNewTxn)
+      revertTransaction(selectTxn);
+
+    updateBuffer(
+        drawRectangle(p0, p1, txn),
+        SELECT);
+
+    selectTxn = txn;
+    currentTxn = txn;
+  }
+  else {
+    int xOffset = p1.x - p0.x;
+    int yOffset = p1.y - p0.y;
+    Transaction txn;
+    move(selectionArea, xOffset, yOffset, txn);
+    currentTxn = txn;
+  }
+}
+
+void
+Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
+{
+  /*
+   * Two cases to consider:
+   * 1. User has not made a selection yet
+   *      The release action will complete the selection
+   *      process and define the selectionArea.
+   * 2. User has a selection already
+   *      Update the selection pixels to the
+   *      translated area
+   */
+  if (selected) {
+    int xOffset = p1.x - p0.x;
+    int yOffset = p1.y - p0.y;
+
+    int i, x, y;
+    for (i=0; i < selectionArea.size(); i++) {
+      selectionArea[i].x += xOffset;
+      selectionArea[i].y += yOffset;
+    }
+    moved = true;
+  }
+  else {
+  /*
+   * The width and height of the selection
+   * should include the pixels occupied
+   * by the selection border
+   */
+    int _width = abs(p1.x - p0.x) + 1;
+    int _height = abs(p1.y - p0.y) + 1;
+    selectionArea.resize(_width * _height);
+
+    int startX = MIN(p0.x, p1.x);
+    int startY = MIN(p0.y, p1.y);
+    int endX = startX + _width;
+    int endY = startY + _height;
+
+    /* Set the selectionArea pixels */
+    int i, j, k=0;
+    Pixel p;
+    wxPoint pt;
+    for (i=startX; i < endX; i++) {
+      for (j=startY; j < endY; j++) {
+        pt = wxPoint(i, j);
+        p = getPixel(pt);
+        selectionArea[k] = p;
+        k++;
+      }
+    }
+    selected = true;
+  }
+}
+
+void
+Canvas::move(
+    const std::vector<Pixel> &pixels,
+    const int &xOffset, const int &yOffset,
+    Transaction &txn)
+{
+  /*
+   * Step:
+   * 1. White out the /original/ selection
+   * 2. Translate the selection
+   */
+
+  if (!isNewTxn) {
+    revertTransaction(currentTxn);
+  }
+  // (1) white out the selection
+  {
+    int i;
+    wxPoint oldPt;
+    Pixel pixel, whitePixel;
+    for (i=0; i < selectionArea.size(); i++) {
+      pixel = selectionArea[i];
+
+      oldPt = wxPoint(pixel.x, pixel.y);
+      txn.update(pixel);
+      whitePixel = Pixel(Color(255, 255, 255), oldPt);
+
+      updateBuffer(whitePixel);
+    }
+  }
+
+  // (2) translate the selection
+  {
+    int i;
+    wxPoint newPt;
+    Color clr;
+    Pixel pixel, oldPixel, newPixel, p;
+    for (i=0; i < selectionArea.size(); i++) {
+      pixel = selectionArea[i];
+      clr = pixel.color;
+
+      newPt = wxPoint(
+          pixel.x + xOffset,
+          pixel.y + yOffset);
+      oldPixel = Pixel(getPixelColor(newPt), newPt);
+      txn.update(oldPixel);
+      newPixel = Pixel(clr, newPt);
+
+      updateBuffer(newPixel);
+    }
+  }
 }

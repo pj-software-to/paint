@@ -45,6 +45,12 @@ class Canvas : public wxPanel {
     bool isNewTxn;
     Transaction currentTxn;
 
+    /* TRUE if user has made a selection */
+    bool selected;
+    bool moved;
+    std::vector<Pixel> selectionArea;
+    Transaction selectTxn;
+
     /* This is the main buffer that is drawn to the screen */
     char *Buffer;
     std::vector<Transaction *> transactions;
@@ -53,6 +59,7 @@ class Canvas : public wxPanel {
      * Private functions
      */
     Color getPixelColor(wxPoint &p);
+    Pixel getPixel(wxPoint p);
     void updateBuffer(const std::vector<wxPoint> &points, const Color &color);
     void updateBuffer(const Pixel &p);
     void addTransaction(Transaction &txn);
@@ -63,6 +70,15 @@ class Canvas : public wxPanel {
     std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
     std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
+
+    /* Event handlers for rectangle selection */
+    void handleSelectRectClick(wxPoint &pt);
+    void handleSelectRectMove(const wxPoint &p0, const wxPoint &p1);
+    void handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1);
+
+    void move(const std::vector<Pixel> &pixels,
+        const int &xOffset, const int &yOffset, Transaction &txn);
+
   public:
     Canvas(wxFrame *parent);
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);
