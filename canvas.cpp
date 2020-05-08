@@ -200,6 +200,10 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       currentTxn = txn;
       break;
     case Line:
+      updateBuffer(
+        drawLine(currPos, txn),
+        color);
+      currentTxn = txn;
       break;
     case DrawRect:
       updateBuffer(
@@ -327,6 +331,24 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
 
   // (4)
   updateTxn(txn, points);
+  return points;
+}
+
+std::vector<wxPoint> 
+Canvas::drawLine(const wxPoint &currPos, Transaction &txn) {
+  std::vector<wxPoint> points; 
+  /*
+   * Steps:
+   * (1) If isNewTxn, revert
+   * (2) Interpolate line from startPos to currPos
+   */
+  if (!isNewTxn) {
+    revertTransaction(currentTxn);
+  } 
+
+  points = linearInterpolation(startPos, currPos);
+  updateTxn(txn, points);
+
   return points;
 }
 

@@ -59,10 +59,10 @@ class Canvas : public wxPanel {
     void revertTransaction(Transaction &txn);
     void updateTxn(Transaction &txn, const std::vector<wxPoint> &points);
 
-
     std::vector<wxPoint> drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
     std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
+    std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
   public:
     Canvas(wxFrame *parent);
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);
