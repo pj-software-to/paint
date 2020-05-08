@@ -6,11 +6,13 @@
 #include <wx/wx.h>
 #endif
 
-#include "canvas.h"
-#include "interpolation.h"
-
 #include <stdio.h>
 #include <iostream>
+#include <math.h>
+
+#include "helper.h"
+#include "canvas.h"
+#include "interpolation.h"
 
 #define LOC(x,y,w) (3*((y)*(w)+(x)))
 
@@ -46,6 +48,29 @@ wxPanel(parent) {
 
 void Canvas::addTransaction(Transaction &t) {
   transactions.push_back(&t);
+}
+
+void Canvas::revertTransaction(Transaction &txn) {
+  std::vector<Pixel> *pixels;
+  Pixel p;
+  pixels = &(txn.pixels);
+  int i;
+  for (i=0; i<pixels->size(); i++) {
+    p = (*pixels)[i];
+    updateBuffer(p); 
+  }
+}
+
+Color Canvas::getPixelColor(wxPoint &p) {
+  int i = LOC(p.x, p.y, width);
+  if (i >= 3 * width * height)
+    return Color(255, 255, 255);
+
+  return Color(
+    Buffer[i],
+    Buffer[i+1],
+    Buffer[i+2]
+  );
 }
 
 void Canvas::updateBuffer(const Pixel &p) {
@@ -111,6 +136,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
   /* Always should be left is down */
   assert(evt.LeftIsDown());
 
+  isNewTxn = true;
   int x = evt.GetX();
   int y = evt.GetY();
   prevPos = wxPoint(x, y);
@@ -184,14 +210,114 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
 
   wxWindow::Refresh();
   prevPos = wxPoint(currPos.x, currPos.y);
+  isNewTxn = false;
 }
 
 void Canvas::mouseReleased(wxMouseEvent &evt)
 {
 }
 
-std::vector<wxPoint> Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
+std::vector<wxPoint>
+Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
   std::vector<wxPoint> points;
+  /*
+   * Steps:
+   * (1) If not first transaction, delete previous transaction
+   * (2) Interpolate some points such that the interpolated points
+   *     form a circle by using distance b/w currPos and startPos
+   * (3) Further interpolate by calling either linear or polynomial
+   *     interpolation on the sparse points to generate the pixels.
+   * (4) Write all previous buffer values to the txn
+   */  
+
+  // (1)
+  if (!isNewTxn) {
+    revertTransaction(currentTxn);
+  }
+
+  /*
+   * Steps for (2):
+   * (2a) Find diameter/radius
+   * (2b) Find center point
+   * (2c) Traverse around the circle by using center point
+   */
+  double radius = length(currPos, startPos)/2;
+  wxPoint c;
+  {
+    wxRealVec v; 
+    wxVec _v = currPos - startPos;
+    v = wxRealVec((double)_v.x, (double)_v.y);
+    v = normalize(v);
+
+    wxRealPoint _curr(startPos);
+    c = wxPoint(_curr + radius*v);
+  }
+
+  /*
+   * Number of samples depends on the circumference
+   * of the circuit
+   */ 
+  std::vector<wxPoint> draft;
+  {
+    wxRealPoint p;
+    wxRealVec _u; 
+    double _x, _y;
+    double _P = (2*M_PI) / (2*M_PI*radius);
+    double theta;
+    for (theta=0.0; theta<2*M_PI; theta+=_P) {
+      _x = cos(theta);
+      _y = sin(theta);
+      _u = normalize(wxRealVec(_x,_y)); // should be normal, but..
+
+      p = wxRealPoint(c) + radius*_u;
+      draft.push_back(wxPoint(p));
+    }
+  }
+
+  // (3)
+  {
+    std::vector<wxPoint> pts;
+    wxPoint p0, p1; 
+    int i;
+    for (i=0; i<draft.size()-1; i++) {
+      p0 = draft[i];
+      p1 = draft[i+1];
+
+      pts = linearInterpolation(p0, p1);
+      points.insert(points.end(), pts.begin(), pts.end());
+    } 
+  }
+
+  // (4)
+  {
+    Pixel pixel; 
+    wxPoint pt;
+    int i;
+    for (i=0; i<points.size(); i++) {
+      pt = points[i];
+      pixel = Pixel(getPixelColor(pt), pt);
+      txn.update(pixel);
+    }
+  }
 
   return points;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

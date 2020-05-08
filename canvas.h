@@ -42,6 +42,7 @@ class Canvas : public wxPanel {
      * taking place.
      * There should only be ONE txn occuring
      * at a time */
+    bool isNewTxn;
     Transaction currentTxn;
 
     /* This is the main buffer that is drawn to the screen */
@@ -51,9 +52,11 @@ class Canvas : public wxPanel {
     /*
      * Private functions
      */
+    Color getPixelColor(wxPoint &p);
     void updateBuffer(const std::vector<wxPoint> &points, const Color &color);
     void updateBuffer(const Pixel &p);
-    void addTransaction(Transaction &t);
+    void addTransaction(Transaction &txn);
+    void revertTransaction(Transaction &txn);
 
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
   public:

@@ -14,6 +14,7 @@ class Pixel {
   public:
     inline Pixel();
     inline Pixel(char r, char g, char b, wxCoord x, wxCoord y);
+    inline Pixel(Color &&color, wxPoint &p);
     Color color;
     wxCoord x;
     wxCoord y;
@@ -27,6 +28,12 @@ inline Pixel::Pixel(char r, char g, char b, wxCoord x, wxCoord y) {
   this->color.b = b;
   this->x = x;
   this->y = y;
+}
+
+inline Pixel::Pixel(Color &&color, wxPoint &p) {
+  this->color = color;
+  this->x = p.x;
+  this->y = p.y;
 }
 
 inline Color::Color() {}
