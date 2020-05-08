@@ -75,6 +75,9 @@ Color Canvas::getPixelColor(wxPoint &p) {
 
 void Canvas::updateBuffer(const Pixel &p) {
   /* Update buffer with new colors */
+  if (p.x >= width || p.y >= height)
+    return;
+  
   int i = LOC(p.x, p.y, width);
   if (i >= 3 * width * height)
     return;
