@@ -44,6 +44,12 @@ class Canvas : public wxPanel {
      * at a time */
     bool isNewTxn;
     Transaction currentTxn;
+    Transaction selectTxn;
+
+    /* TRUE if user has made a selection */
+    bool selected;
+    std::vector<Pixel> selectionArea;
+    std::vector<wxPoint> selectionBorder;
 
     /* This is the main buffer that is drawn to the screen */
     char *Buffer;
@@ -67,6 +73,15 @@ class Canvas : public wxPanel {
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
     std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
     void fill(const wxPoint &p, const Color &color, Transaction &txn);
+
+    /* Event handlers for rectangle selection */
+    void handleSelectRectClick(wxPoint &pt);
+    void handleSelectRectMove(const wxPoint &p0, const wxPoint &p1);
+    void handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1);
+
+    void move(const std::vector<Pixel> &pixels,
+        const int &xOffset, const int &yOffset, Transaction &txn);
+
   public:
     Canvas(wxFrame *parent);
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);

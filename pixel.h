@@ -20,6 +20,8 @@ class Pixel {
     inline Pixel(char r, char g, char b, wxCoord x, wxCoord y);
     inline Pixel(Color &&color, wxPoint &p);
     inline Pixel(const Color &color, const wxPoint &p);
+    inline Pixel(Color &color, wxPoint &p);
+
     Color color;
     wxCoord x;
     wxCoord y;
@@ -42,6 +44,12 @@ inline Pixel::Pixel(Color &&color, wxPoint &p) {
 }
 
 inline Pixel::Pixel(const Color &color, const wxPoint &p) {
+  this->color = color;
+  this->x = p.x;
+  this->y = p.y;
+}
+
+inline Pixel::Pixel(Color &color, wxPoint &p) {
   this->color = color;
   this->x = p.x;
   this->y = p.y;
