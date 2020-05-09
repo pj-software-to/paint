@@ -7,6 +7,6 @@
 
 #include <vector>
 
-std::vector<wxPoint> linearInterpolation(wxPoint p0, wxPoint p1);
+std::vector<wxPoint> lerp(wxPoint p0, wxPoint p1, int width);
 
 #endif //PAINT_INTERPOLATION_H

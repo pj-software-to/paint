@@ -319,8 +319,7 @@ void Canvas::mouseReleased(wxMouseEvent &evt)
 std::vector<wxPoint>
 Canvas::drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
 {
-  std::vector<wxPoint> points =
-      linearInterpolation(p0, p1);
+  std::vector<wxPoint> points = lerp(p0, p1, 5);
 
   updateTransaction(txn, points);
   return points;
@@ -397,7 +396,7 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
       p0 = draft[i];
       p1 = draft[i+1];
 
-      pts = linearInterpolation(p0, p1);
+      pts = lerp(p0, p1, 5);
       points.insert(points.end(), pts.begin(), pts.end());
     } 
   }
@@ -419,7 +418,7 @@ Canvas::drawLine(const wxPoint &currPos, Transaction &txn) {
     revertTransaction(currentTxn);
   } 
 
-  points = linearInterpolation(startPos, currPos);
+  points = lerp(startPos, currPos, 5);
   updateTransaction(txn, points);
 
   return points;
@@ -440,6 +439,10 @@ Canvas::fill(const wxPoint &p, const Color &color, Transaction &txn) {
    * simply passes back the points to be filled in. 
    */
   Color c = getPixelColor(p);
+  if (c == color) {
+    return;
+  }
+
   int loc = LOC(p.x, p.y, width);
   txn.update(Pixel(c,p));
   Buffer[loc] = color.r;
@@ -507,10 +510,10 @@ Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
     wxPoint p3 = wxPoint(p1.x, p0.y);
     std::vector<wxPoint> lines[4];
 
-    lines[0] = linearInterpolation(p0, p3);
-    lines[1] = linearInterpolation(p1, p3);
-    lines[2] = linearInterpolation(p1, p2);
-    lines[3] = linearInterpolation(p0, p2);
+    lines[0] = lerp(p0, p3, 5);
+    lines[1] = lerp(p1, p3, 5);
+    lines[2] = lerp(p1, p2, 5);
+    lines[3] = lerp(p0, p2, 5);
 
     int i;
     for (i=0; i < 4; i++) {
