@@ -344,7 +344,8 @@ void Canvas::mouseReleased(wxMouseEvent &evt)
   addTransaction(currentTxn);
 }
 
-std::vector<wxPoint> Canvas::drawFreeHand(Transaction &txn)
+std::vector<wxPoint>
+Canvas::drawFreeHand(Transaction &txn)
 {
   if (!isNewTxn) {
     revertTransaction(currentTxn);

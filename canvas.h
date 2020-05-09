@@ -58,8 +58,24 @@ class Canvas : public wxPanel {
     char *Buffer;
     std::vector<Transaction> transactions;
     
-    /* For Ctrl+Z - redo options */
-    bool isRedo = false;
+    /* 
+     * For Ctrl+Z - redo options
+     *
+     * Note:
+     * If we want to implement "Redo" option, need another
+     * 'forward' list of transactions to store the pixel 
+     * values after a particular transaction.
+     * Currently 'transactions' vector stores the previous
+     * state of the changed pixels so we can always go back
+     * to the buffer state prior to a transaction.
+     * 
+     * A 'forward' transactions vector would store the 
+     * values and locations of the pixels changed as a result
+     * of the transaction, so upon an 'undo' (i.e. Ctrl+Z),
+     * a 'redo' can be executed so that the transaction which
+     * was undid, can be reinstated onto the buffer.
+     */
+    bool isRedo = false; /* Currently not supported */
     bool isUndo = false;
 
     /*
