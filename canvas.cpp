@@ -22,6 +22,8 @@
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 BEGIN_EVENT_TABLE( Canvas, wxPanel )
+  EVT_KEY_DOWN(Canvas::keyDownEvent)
+  EVT_KEY_UP(Canvas::keyUpEvent)
   EVT_PAINT(Canvas::paintEvent)
   EVT_MOTION(Canvas::mouseMoved)
   EVT_LEFT_DOWN(Canvas::mouseDown)
@@ -53,7 +55,7 @@ wxPanel(parent) {
 }
 
 void Canvas::addTransaction(Transaction &t) {
-  transactions.push_back(&t);
+  transactions.push_back(t);
 }
 
 void Canvas::revertTransaction(Transaction &txn) {
@@ -200,6 +202,30 @@ void Canvas::render(wxDC&  dc)
   ///////////////////////////////////
 }
 
+
+void Canvas::keyDownEvent(wxKeyEvent &evt) {
+  char uc = evt.GetUnicodeKey();
+  if (evt.ControlDown() && uc == 90) {
+    if (!isUndo && transactions.size() > 0) {
+      isUndo = true;
+
+      Transaction *latest;
+      latest = &transactions.back(); 
+      revertTransaction(*latest);
+      transactions.pop_back();
+      wxWindow::Refresh();
+    }
+  }
+}
+
+void Canvas::keyUpEvent(wxKeyEvent & evt) {
+  char uc = evt.GetUnicodeKey();
+  // Z is released - not checking for Ctrl here on purpose
+  if (uc == 90) {
+    isUndo = false;
+  }
+}
+
 /* Event handlers to handle CANVAS mouse events */
 /*
  * Handle CLICK event
@@ -220,20 +246,17 @@ void Canvas::mouseDown(wxMouseEvent &evt)
   Transaction txn;
   Pixel p(color.r, color.g, color.b, x, y);
   switch(toolType) {
+    case Eraser:
     case Pencil:
+      freehand.clear();
+      freehand.push_back(wxPoint(x, y));
     case Line:
     case DrawRect:
     case DrawCircle:
-      currentTxn.update(p);
-      updateBuffer(p);
-      break;
-    case Eraser:
-      updateBuffer(Pixel((char) 255, (char)255, (char)255, x, y));
       break;
     case Fill:
       fill(startPos, color, txn);
       currentTxn = txn;
-      addTransaction(currentTxn);
       break;
     case SlctRect:
       handleSelectRectClick(startPos);
@@ -258,8 +281,9 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
   Transaction txn;
   switch(toolType) {
     case Pencil:
+      freehand.push_back(currPos);
       updateBuffer(
-        drawFreeHand(prevPos, currPos, txn),
+        drawFreeHand(txn),
         color);
       currentTxn = txn;
       break;
@@ -282,8 +306,9 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       currentTxn = txn;
       break;
     case Eraser:
+      freehand.push_back(currPos);
       updateBuffer(
-          drawFreeHand(prevPos, currPos, txn),
+          drawFreeHand(txn),
           WHITE);
       currentTxn = txn;
       break;
@@ -314,12 +339,27 @@ void Canvas::mouseReleased(wxMouseEvent &evt)
     default:
       break;
   }
+
+  // commit transaction
+  addTransaction(currentTxn);
 }
 
-std::vector<wxPoint>
-Canvas::drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
+std::vector<wxPoint> Canvas::drawFreeHand(Transaction &txn)
 {
-  std::vector<wxPoint> points = lerp(p0, p1, 5);
+  if (!isNewTxn) {
+    revertTransaction(currentTxn);
+  }
+
+  std::vector<wxPoint> points, _pts;
+  wxPoint p0, p1;
+  int i;
+  for (i=0; i<freehand.size()-1; i++) {
+    p0 = freehand[i];
+    p1 = freehand[i+1];
+
+    _pts = lerp(p0, p1, 5);
+    points.insert(points.end(), _pts.begin(), _pts.end());
+  }
 
   updateTransaction(txn, points);
   return points;

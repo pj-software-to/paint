@@ -51,10 +51,17 @@ class Canvas : public wxPanel {
     std::vector<Pixel> selectionArea;
     std::vector<wxPoint> selectionBorder;
 
+    /* Sampled points for freehand */
+    std::vector<wxPoint> freehand;
+
     /* This is the main buffer that is drawn to the screen */
     char *Buffer;
-    std::vector<Transaction *> transactions;
+    std::vector<Transaction> transactions;
     
+    /* For Ctrl+Z - redo options */
+    bool isRedo = false;
+    bool isUndo = false;
+
     /*
      * Private functions
      */
@@ -68,7 +75,7 @@ class Canvas : public wxPanel {
     void revertTransaction(Transaction &txn);
     void updateTransaction(Transaction &txn, const std::vector<wxPoint> &points);
 
-    std::vector<wxPoint> drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
+    std::vector<wxPoint> drawFreeHand(Transaction &txn);
     std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
     std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
@@ -92,6 +99,8 @@ class Canvas : public wxPanel {
     void paintNow();
 
     /* Mouse event handlers */
+    void keyDownEvent(wxKeyEvent & evt);
+    void keyUpEvent(wxKeyEvent & evt);
     void mouseDown(wxMouseEvent & evt);
     void mouseMoved(wxMouseEvent & evt);
     void mouseReleased(wxMouseEvent & evt);
