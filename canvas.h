@@ -52,17 +52,21 @@ class Canvas : public wxPanel {
     /*
      * Private functions
      */
-    Color getPixelColor(wxPoint &p);
+    Pixel getPixel(const wxPoint &p);
+    Color getPixelColor(const wxPoint &p);
+    void getNeighbors(const wxPoint &p, wxPoint *neighbors, int &ncount);
+
     void updateBuffer(const std::vector<wxPoint> &points, const Color &color);
     void updateBuffer(const Pixel &p);
     void addTransaction(Transaction &txn);
     void revertTransaction(Transaction &txn);
-    void updateTxn(Transaction &txn, const std::vector<wxPoint> &points);
+    void updateTransaction(Transaction &txn, const std::vector<wxPoint> &points);
 
     std::vector<wxPoint> drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
     std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
     std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
+    void fill(const wxPoint &p, const Color &color, Transaction &txn);
   public:
     Canvas(wxFrame *parent);
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);

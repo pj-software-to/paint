@@ -8,6 +8,10 @@ class Color {
     char r;
     char g;
     char b;
+
+    bool operator==(const Color &_b) {
+      return (r == _b.r && g == _b.g && b == _b.b);
+    }
 };
 
 class Pixel {
@@ -15,6 +19,7 @@ class Pixel {
     inline Pixel();
     inline Pixel(char r, char g, char b, wxCoord x, wxCoord y);
     inline Pixel(Color &&color, wxPoint &p);
+    inline Pixel(const Color &color, const wxPoint &p);
     Color color;
     wxCoord x;
     wxCoord y;
@@ -31,6 +36,12 @@ inline Pixel::Pixel(char r, char g, char b, wxCoord x, wxCoord y) {
 }
 
 inline Pixel::Pixel(Color &&color, wxPoint &p) {
+  this->color = color;
+  this->x = p.x;
+  this->y = p.y;
+}
+
+inline Pixel::Pixel(const Color &color, const wxPoint &p) {
   this->color = color;
   this->x = p.x;
   this->y = p.y;

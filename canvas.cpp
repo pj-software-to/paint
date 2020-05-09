@@ -6,7 +6,10 @@
 #include <wx/wx.h>
 #endif
 
+#include <unordered_set>
+#include <queue>
 #include <stdio.h>
+#include <sstream>
 #include <iostream>
 #include <math.h>
 
@@ -62,7 +65,7 @@ void Canvas::revertTransaction(Transaction &txn) {
 }
 
 void
-Canvas::updateTxn(Transaction &txn, const std::vector<wxPoint> &points)
+Canvas::updateTransaction(Transaction &txn, const std::vector<wxPoint> &points)
 {
   int i=0;
   wxPoint pt;
@@ -74,7 +77,12 @@ Canvas::updateTxn(Transaction &txn, const std::vector<wxPoint> &points)
   }
 }
 
-Color Canvas::getPixelColor(wxPoint &p) {
+Color
+Canvas::getPixelColor(const wxPoint &p) {
+  /* Update buffer with new colors */
+  if (p.x >= width || p.y >= height)
+    return WHITE;
+
   int i = LOC(p.x, p.y, width);
   if (i >= 3 * width * height)
     return WHITE;
@@ -84,6 +92,54 @@ Color Canvas::getPixelColor(wxPoint &p) {
     Buffer[i+1],
     Buffer[i+2]
   );
+}
+
+Pixel
+Canvas::getPixel(const wxPoint &p) {
+  wxPoint _p(p.x, p.y);
+  return Pixel(getPixelColor(p), _p);
+}
+
+void
+Canvas::getNeighbors(const wxPoint &p, wxPoint *neighbors, int &ncount) {
+  int x, y;
+  ncount = 0;
+
+  // Up
+  x = p.x;
+  y = p.y - 1;
+  if (x < width && y < height) {
+    neighbors[ncount].x = x;
+    neighbors[ncount].y = y;
+    ncount++; 
+  }
+
+  // Down
+  x = p.x;
+  y = p.y + 1;
+  if (x < width && y < height) {
+    neighbors[ncount].x = x;
+    neighbors[ncount].y = y;
+    ncount++; 
+  }
+
+  // Left
+  x = p.x - 1;
+  y = p.y;
+  if (x < width && y < height) {
+    neighbors[ncount].x = x;
+    neighbors[ncount].y = y;
+    ncount++; 
+  }
+
+  // Right
+  x = p.x + 1;
+  y = p.y;
+  if (x < width && y < height) {
+    neighbors[ncount].x = x;
+    neighbors[ncount].y = y;
+    ncount++; 
+  }
 }
 
 void Canvas::updateBuffer(const Pixel &p) {
@@ -158,6 +214,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
   prevPos = wxPoint(x, y);
   startPos = wxPoint(x, y);
 
+  Transaction txn;
   Pixel p(color.r, color.g, color.b, x, y);
   switch(toolType) {
     case Pencil:
@@ -171,6 +228,9 @@ void Canvas::mouseDown(wxMouseEvent &evt)
       updateBuffer(Pixel((char) 255, (char)255, (char)255, x, y));
       break;
     case Fill:
+      fill(startPos, color, txn);
+      currentTxn = txn;
+      addTransaction(currentTxn);
       break;
     case SlctRect:
       break;
@@ -249,7 +309,7 @@ Canvas::drawFreeHand(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
   std::vector<wxPoint> points =
       linearInterpolation(p0, p1);
 
-  updateTxn(txn, points);
+  updateTransaction(txn, points);
   return points;
 }
 
@@ -330,7 +390,7 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
   }
 
   // (4)
-  updateTxn(txn, points);
+  updateTransaction(txn, points);
   return points;
 }
 
@@ -347,9 +407,66 @@ Canvas::drawLine(const wxPoint &currPos, Transaction &txn) {
   } 
 
   points = linearInterpolation(startPos, currPos);
-  updateTxn(txn, points);
+  updateTransaction(txn, points);
 
   return points;
+}
+
+void
+Canvas::fill(const wxPoint &p, const Color &color, Transaction &txn) {
+  /*
+   * Steps:
+   * (1) From given point 'p', perform breadth-first
+   *     algorithm, fill in every pixel whose color
+   *     is the same as 'p'.
+   * (2) Update given Transaction 'txn' with all filled
+   *     pixels.
+   * 
+   * Note: we are not 'filling' in the pixel here, that is
+   * done in calling event handler function. This function
+   * simply passes back the points to be filled in. 
+   */
+  Color c = getPixelColor(p);
+  int loc = LOC(p.x, p.y, width);
+  txn.update(Pixel(c,p));
+  Buffer[loc] = color.r;
+  Buffer[loc+1] = color.g;
+  Buffer[loc+2] = color.b;
+
+  std::queue<wxPoint> Q;
+  Q.push(p);
+
+  wxPoint neighbors[4];
+  int ncount;
+  wxPoint _p;
+  std::cout << "start" << std::endl;
+  while (!Q.empty()) {
+    _p = Q.front();
+    Q.pop();
+
+    getNeighbors(_p, neighbors, ncount);
+
+    std::string _pstr;
+    int _x, _y;
+    int i;
+    for (i=0; i<ncount; i++) {
+      _x = neighbors[i].x;
+      _y = neighbors[i].y;
+      char r,g,b;
+      loc = LOC(_x, _y, width);
+      r = Buffer[loc];
+      g = Buffer[loc+1];
+      b = Buffer[loc+2];
+      if (r == c.r && g == c.g && b == c.b) {
+        txn.update(Pixel(r,g,b,_x,_y));
+        Buffer[loc] = color.r;
+        Buffer[loc+1] = color.g;
+        Buffer[loc+2] = color.b;
+        Q.push(wxPoint(_x,_y));
+      }
+    }
+  }
+  std::cout << "end" << std::endl;
 }
 
 std::vector<wxPoint>
@@ -390,7 +507,6 @@ Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
     }
   }
 
-  updateTxn(txn, points);
-
+  updateTransaction(txn, points);
   return points;
 }
