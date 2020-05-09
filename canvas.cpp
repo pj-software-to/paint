@@ -425,9 +425,8 @@ Canvas::handleSelectRectClick(wxPoint &pt)
    *    - Same as DrawRect
    * 2. User has a selection
    *    a) If user clicks ON the selection - they can move it
-   *    b) NOT on the selection - have to revert the selectTxn
-   *        (i.e. erase the selection border) -> now the user
-   *        no longer has a selection
+   *    b) NOT on the selection - erase the selection border)
+   *    -> now the user no longer has a selection
    */
 
   // Case 1)
