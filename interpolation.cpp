@@ -60,10 +60,11 @@ std::vector<wxPoint> lerp(wxPoint p0, wxPoint p1, int width)
     int left, right;
     int top, bot;
     
+    // Compiler will optimize this.. More readable this way
     left = std::max(0, x - width/2);
-    right = x + width/2;
+    right = x + (width - width/2);
     top = std::max(0, y - width/2);
-    bot = y + width/2; 
+    bot = y + (width - width/2); 
 
     int i,j;
     for (i=left; i<right; i++) {
