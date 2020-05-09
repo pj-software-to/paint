@@ -287,8 +287,6 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
           WHITE);
       currentTxn = txn;
       break;
-    case Fill:
-      break;
     case SlctRect:
       handleSelectRectMove(startPos, currPos);
       break;
