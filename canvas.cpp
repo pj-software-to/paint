@@ -257,6 +257,7 @@ void Canvas::mouseReleased(wxMouseEvent &evt)
   switch (toolType) {
     case SlctRect:
       handleSelectRectRelease(startPos, pt);
+      wxWindow::Refresh();
       break;
     default:
       break;
@@ -463,11 +464,11 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
     if (!isNewTxn)
       revertTransaction(selectTxn);
 
+    selectionBorder = drawRectangle(p0, p1, txn);
     updateBuffer(
-        drawRectangle(p0, p1, txn),
+        selectionBorder,
         SELECT);
 
-    selectTxn = txn;
     currentTxn = txn;
   }
   else {
@@ -500,7 +501,13 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
       selectionArea[i].x += xOffset;
       selectionArea[i].y += yOffset;
     }
-    moved = true;
+
+    for (i=0; i < selectionBorder.size(); i++) {
+      selectionBorder[i].x += xOffset;
+      selectionBorder[i].y += yOffset;
+    }
+    updateBuffer(selectionBorder, WHITE);
+    selected = false;
   }
   else {
   /*

@@ -49,6 +49,7 @@ class Canvas : public wxPanel {
     bool selected;
     bool moved;
     std::vector<Pixel> selectionArea;
+    std::vector<wxPoint> selectionBorder;
     Transaction selectTxn;
 
     /* This is the main buffer that is drawn to the screen */
