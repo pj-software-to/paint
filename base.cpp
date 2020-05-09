@@ -9,8 +9,10 @@
 #include "base.h"
 
 #define DATA_PATH "data"
-#define DEFAULT_WIDTH 1000
-#define DEFAULT_HEIGHT 500 
+#define DEFAULT_WIDTH 1200 
+#define DEFAULT_HEIGHT 900 
+#define MAIN_FRAME_WIDTH 1250
+#define MAIN_FRAME_HEIGHT 900 
 
 BEGIN_EVENT_TABLE( MainFrame, wxFrame )
 END_EVENT_TABLE()
@@ -20,7 +22,8 @@ IMPLEMENT_APP(MainApp)
 bool MainApp::OnInit()
 {
   wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
-  frame = new MainFrame(wxT("Hello wxDC"), wxPoint(50,50), wxSize(800,600));
+  frame = new MainFrame(wxT("Hello wxDC"), wxPoint(50,50),
+    wxSize(MAIN_FRAME_WIDTH, MAIN_FRAME_HEIGHT));
 
   unsigned int width, height;
   
