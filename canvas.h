@@ -21,6 +21,13 @@ enum ToolType
   Lasso
 };
 
+enum KEY_PRESS
+{
+  KEY_Z = 90,
+  KEY_C = 67,
+  KEY_V = 86
+};
+
 class Canvas : public wxPanel {
   private:
     /* In pixels */
@@ -77,6 +84,8 @@ class Canvas : public wxPanel {
      */
     bool isRedo = false; /* Currently not supported */
     bool isUndo = false;
+    bool isCopy = false;
+    bool isPaste = false;
 
     /*
      * Private functions
@@ -90,6 +99,9 @@ class Canvas : public wxPanel {
     void addTransaction(Transaction &txn);
     void revertTransaction(Transaction &txn);
     void updateTransaction(Transaction &txn, const std::vector<wxPoint> &points);
+
+    void pasteFromClip();
+    void cpySelectToClip();
 
     std::vector<wxPoint> drawFreeHand(Transaction &txn);
     std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn);

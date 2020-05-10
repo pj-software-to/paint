@@ -4,6 +4,7 @@
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
+#include <wx/clipbrd.h>
 #endif
 
 #include <unordered_set>
@@ -173,6 +174,27 @@ void Canvas::updateBuffer(const std::vector<wxPoint> &points,
   }
 }
 
+void Canvas::pasteFromClip() {
+  if (wxTheClipboard->Open()) {
+    if (wxTheClipboard->IsSupported(wxDF_BITMAP)) {
+      wxBitmapDataObject data;
+      printf("BMP\n");      
+    } else if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+      wxTextDataObject data;
+      wxTheClipboard->GetData(data);
+
+      printf("TEXT: %s\n",
+        data.GetText().ToStdString().c_str());
+    } 
+
+    wxTheClipboard->Close();
+  }
+}
+
+void Canvas::cpySelectToClip() {
+
+}
+
 /*
  * Called by the system of by wxWidgets when the panel needs
  * to be redrawn. You can also trigger this call by
@@ -202,27 +224,56 @@ void Canvas::render(wxDC&  dc)
   ///////////////////////////////////
 }
 
-
-void Canvas::keyDownEvent(wxKeyEvent &evt) {
+ void Canvas::keyDownEvent(wxKeyEvent &evt) {
   char uc = evt.GetUnicodeKey();
-  if (evt.ControlDown() && uc == 90) {
-    if (!isUndo && transactions.size() > 0) {
-      isUndo = true;
+  if (evt.ControlDown()) {
+    switch (uc) {
+      case (KEY_Z):
+        if (!isUndo && transactions.size() > 0) {
+          isUndo = true;
 
-      Transaction *latest;
-      latest = &transactions.back(); 
-      revertTransaction(*latest);
-      transactions.pop_back();
-      wxWindow::Refresh();
+          Transaction *latest;
+          latest = &transactions.back(); 
+          revertTransaction(*latest);
+          transactions.pop_back();
+        }
+        break;
+      case (KEY_C):
+        if (!isCopy) {
+          printf("Copy!\n");
+          isCopy = true;
+          cpySelectToClip();           
+        }
+        break;
+      case (KEY_V):
+        if (!isPaste) {
+          printf("Paste!\n");
+          isPaste = true;
+          pasteFromClip();
+        }
+        break;
+      default: 
+        break;
     }
   }
+  wxWindow::Refresh();
 }
 
 void Canvas::keyUpEvent(wxKeyEvent & evt) {
   char uc = evt.GetUnicodeKey();
   // Z is released - not checking for Ctrl here on purpose
-  if (uc == 90) {
-    isUndo = false;
+  switch(uc) {
+    case (KEY_Z):
+      isUndo = false;
+      break;
+    case (KEY_C):
+      isCopy = false;
+      break;
+    case (KEY_V):
+      isPaste = false;
+      break;
+    default:
+      break; 
   }
 }
 
