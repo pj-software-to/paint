@@ -100,7 +100,7 @@ class Canvas : public wxPanel {
     void revertTransaction(Transaction &txn);
     void updateTransaction(Transaction &txn, const std::vector<wxPoint> &points);
 
-    void pasteFromClip();
+    bool pasteFromClip(Transaction &txn);
     void cpySelectToClip();
 
     std::vector<wxPoint> drawFreeHand(Transaction &txn);

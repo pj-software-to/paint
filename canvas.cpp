@@ -174,27 +174,6 @@ void Canvas::updateBuffer(const std::vector<wxPoint> &points,
   }
 }
 
-void Canvas::pasteFromClip() {
-  if (wxTheClipboard->Open()) {
-    if (wxTheClipboard->IsSupported(wxDF_BITMAP)) {
-      wxBitmapDataObject data;
-      printf("BMP\n");      
-    } else if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
-      wxTextDataObject data;
-      wxTheClipboard->GetData(data);
-
-      printf("TEXT: %s\n",
-        data.GetText().ToStdString().c_str());
-    } 
-
-    wxTheClipboard->Close();
-  }
-}
-
-void Canvas::cpySelectToClip() {
-
-}
-
 /*
  * Called by the system of by wxWidgets when the panel needs
  * to be redrawn. You can also trigger this call by
@@ -224,6 +203,68 @@ void Canvas::render(wxDC&  dc)
   ///////////////////////////////////
 }
 
+bool Canvas::pasteFromClip(Transaction &txn) {
+  if (wxTheClipboard->Open()) {
+    if (wxTheClipboard->IsSupported(wxDF_BITMAP)) {
+      /*
+       * Copy bitmap / image:
+       * (1) Read and cast clipboard bitmap as wxImage
+       * (2) Get wxImage's internal data buffer which contains
+       *     RGBRGBRGB.. data format of pixels, row major. 
+       * (3) Iterate through, add previous color to transactions,
+       *     then update display buffer.
+       * 
+       * Note: Could try and optimize using memset, this
+       * requires changes to the transaction system.
+       */
+      wxImage bmpImage;
+      wxBitmapDataObject data;
+
+      wxTheClipboard->GetData(data);
+      bmpImage = data.GetBitmap().ConvertToImage();
+
+      unsigned char *buffer;
+      unsigned int N, M;
+      N = bmpImage.GetHeight();
+      M = bmpImage.GetWidth();
+      buffer = bmpImage.GetData();
+      int ind;
+      int x, y;
+      for (y=0; y<std::min(height, N); y++) {
+        for (x=0; x<std::min(width, M); x++) {
+          wxPoint p(x,y);
+          Pixel pixel;
+          Color prev_c = getPixelColor(p); /* prev color */
+          Color c;
+
+          ind = LOC(x, y, M);
+          c = Color(
+            buffer[ind],
+            buffer[ind+1],
+            buffer[ind+2]
+          );
+
+          pixel = Pixel(c, p);
+          txn.update(Pixel(prev_c, p));
+
+          updateBuffer(pixel);
+        }
+      }
+    } 
+    /* 
+     * Add more options here:
+     * e.g. wxDF_TEXT to process clipboard text input
+     */
+
+    // Always close the clipboard
+    wxTheClipboard->Close();
+  }
+}
+
+void Canvas::cpySelectToClip() {
+
+}
+
  void Canvas::keyDownEvent(wxKeyEvent &evt) {
   char uc = evt.GetUnicodeKey();
   if (evt.ControlDown()) {
@@ -247,9 +288,12 @@ void Canvas::render(wxDC&  dc)
         break;
       case (KEY_V):
         if (!isPaste) {
-          printf("Paste!\n");
           isPaste = true;
-          pasteFromClip();
+          Transaction txn;
+          if (pasteFromClip(txn)) {
+            currentTxn = txn;
+            addTransaction(currentTxn);
+          }
         }
         break;
       default: 
