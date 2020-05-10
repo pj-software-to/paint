@@ -9,10 +9,10 @@
 #include "base.h"
 
 #define DATA_PATH "data"
-#define DEFAULT_WIDTH 1200 
-#define DEFAULT_HEIGHT 900 
-#define MAIN_FRAME_WIDTH 1250
-#define MAIN_FRAME_HEIGHT 900 
+#define DEFAULT_WIDTH 1000
+#define DEFAULT_HEIGHT 500
+#define MAIN_FRAME_WIDTH 1100
+#define MAIN_FRAME_HEIGHT 600
 
 BEGIN_EVENT_TABLE( MainFrame, wxFrame )
 END_EVENT_TABLE()
