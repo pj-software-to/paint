@@ -678,10 +678,29 @@ void Canvas::makeDashed(std::vector<wxPoint> &border) {
   }
 }
 
+void printPixels(std::vector<Pixel> pixels) {
+  int i;
+  Pixel p;
+  for (i=0; i < pixels.size(); i++) {
+    p = pixels[i];
+    printf("pixel: (%d, %d) (%d %d %d)\n",
+        p.x,
+        p.y,
+        p.color.r,
+        p.color.g,
+        p.color.b);
+  }
+}
+
+/*
+ * Reset all selection related fields
+ */
 void Canvas::clearSelection() {
   selected = false;
   selectionArea.clear();
   selectionBorder.clear();
+  revertTransaction(selectTxn);
+  selectTxn.pixels.clear();
   delete selection;
 }
 
@@ -707,8 +726,6 @@ Canvas::handleSelectRectClick(wxPoint &pt)
   // Case 2)
   else {
     if (!selection->isWithinBounds(pt)) {
-      printf("not in bounds\n");
-      updateBuffer(selectionBorder, WHITE);
       clearSelection();
     }
   }
@@ -728,12 +745,10 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
    *    - Have to move the selected pixels to the
    *      new position
    */
-
-
   if (!selected) {
     Transaction txn, sTxn;
     if (!isNewTxn)
-      revertTransaction(selectTxn);
+      revertTransaction(currentTxn);
 
     selectionBorder = drawRectangle(p0, p1, txn, 1);
     makeDashed(selectionBorder);
@@ -741,6 +756,7 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
         selectionBorder,
         SELECT);
 
+    selectTxn = txn;
     currentTxn = txn;
   }
   else {
@@ -769,16 +785,11 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
     int yOffset = p1.y - p0.y;
 
     int i, x, y;
-    for (i=0; i < selectionArea.size(); i++) {
-      selectionArea[i].x += xOffset;
-      selectionArea[i].y += yOffset;
-    }
-
     for (i=0; i < selectionBorder.size(); i++) {
       selectionBorder[i].x += xOffset;
       selectionBorder[i].y += yOffset;
     }
-    updateBuffer(selectionBorder, WHITE);
+//    updateBuffer(selectionBorder, WHITE);
     clearSelection();
   }
   else {
@@ -797,7 +808,7 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
     int endY = startY + _height;
 
     selection = new RectangleSelection(p0, p1);
-
+    
     /* Set the selectionArea pixels */
     int i, j, k=0;
     Pixel p;
@@ -823,7 +834,8 @@ Canvas::move(
   /*
    * Step:
    * 1. White out the /original/ selection
-   * 2. Translate the selection
+   * 2. Save the border pixels
+   * 3. Translate the selection
    */
 
   if (!isNewTxn) {
@@ -845,7 +857,20 @@ Canvas::move(
     }
   }
 
-  // (2) translate the selection
+  // (2) Save border pixels
+  {
+    int i;
+    wxPoint pt, newPt;
+    selectTxn.pixels.resize(selectionBorder.size());
+    assert(selectionBorder.size() == selectTxn.pixels.size());
+    for (i=0; i < selectionBorder.size(); i++) {
+      pt = selectionBorder[i];
+      newPt = wxPoint(pt.x + xOffset, pt.y + yOffset);
+      selectTxn.pixels[i] = Pixel(getPixelColor(newPt), newPt);
+    }
+  }
+
+  // (3) translate the selection
   {
     int i;
     wxPoint newPt;

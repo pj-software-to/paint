@@ -54,7 +54,7 @@ class Canvas : public wxPanel {
     Transaction currentTxn;
     Transaction selectTxn;
 
-    /* TRUE if user has made a selection */
+    /* Selection tool fields */
     bool selected;
     std::vector<Pixel> selectionArea;
     std::vector<wxPoint> selectionBorder;

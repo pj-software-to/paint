@@ -4,11 +4,26 @@
 
 #ifndef PAINT_SELECTION_H
 #define PAINT_SELECTION_H
+/*
+ * Base class that contains fcn isWithinBounds()
+ * which should be overridden by all child classes
+ * The function should return true if the point is
+ * within the selection area. False otherwise.
+ */
 class Selection {
 public:
   inline virtual bool isWithinBounds(wxPoint &point);
 };
 
+/*
+ * Derived classes
+ * One for each type of selection:
+ *    Rectangle, Circle, Lasso (freehand)
+ * Each class contains shape specific
+ * information about the selection.
+ * As per above, all classes override
+ * the isWithinBounds() fcn.
+ */
 class RectangleSelection : public Selection {
 public:
   wxCoord minX;
