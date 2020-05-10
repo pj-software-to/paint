@@ -115,7 +115,7 @@ class Canvas : public wxPanel {
     /* Event handlers for rectangle selection */
     void clearSelection();
 
-    void makeDashed(std::vector<wxPoint> &border);
+    std::vector<wxPoint> makeDashed(const std::vector<wxPoint> &border);
     void handleSelectRectClick(wxPoint &pt);
     void handleSelectRectMove(const wxPoint &p0, const wxPoint &p1);
     void handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1);

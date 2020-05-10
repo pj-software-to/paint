@@ -667,15 +667,23 @@ Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1,
  * Used for generating Selection Border
  * - Given a border, remove points on the border
  */
-void Canvas::makeDashed(std::vector<wxPoint> &border) {
+std::vector<wxPoint>
+Canvas::makeDashed(const std::vector<wxPoint> &border)
+{
+  std::vector<wxPoint> dashed;
   int i;
-  for (i=0; i < border.size()-4; i++) {
-    if (i % 5 == 0) {
-      if (i+3 >= border.size())
+  for (i=0; i < border.size()-5; i++) {
+    if (i % 8 == 0) {
+      if (i+5 >= border.size()) {
         break;
-      border.erase(border.begin() + i+3);
+      }
+      dashed.insert(
+          dashed.end(),
+          border.begin() + i,
+          border.begin() + i + 5);
     }
   }
+  return dashed;
 }
 
 void printPixels(std::vector<Pixel> pixels) {
@@ -751,9 +759,8 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
       revertTransaction(currentTxn);
 
     selectionBorder = drawRectangle(p0, p1, txn, 1);
-    makeDashed(selectionBorder);
     updateBuffer(
-        selectionBorder,
+        makeDashed(selectionBorder),
         SELECT);
 
     selectTxn = txn;
@@ -808,7 +815,7 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
     int endY = startY + _height;
 
     selection = new RectangleSelection(p0, p1);
-    
+
     /* Set the selectionArea pixels */
     int i, j, k=0;
     Pixel p;
@@ -837,7 +844,6 @@ Canvas::move(
    * 2. Save the border pixels
    * 3. Translate the selection
    */
-
   if (!isNewTxn) {
     revertTransaction(currentTxn);
   }
