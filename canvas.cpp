@@ -17,6 +17,7 @@
 #include "helper.h"
 #include "canvas.h"
 #include "interpolation.h"
+#include "selection.h"
 
 #define LOC(x,y,w) (3*((y)*(w)+(x)))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
@@ -32,7 +33,7 @@ BEGIN_EVENT_TABLE( Canvas, wxPanel )
 END_EVENT_TABLE()
 
 Color WHITE = Color((char) 255, (char) 255, (char) 255);
-Color SELECT = Color((char) 32, (char) 82, (char) 133);
+Color SELECT = Color((char) 66, (char) 135, (char) 245);
 
 /* CONSTRUCTORS */
 Canvas::Canvas(wxFrame *parent) :
@@ -677,6 +678,13 @@ void Canvas::makeDashed(std::vector<wxPoint> &border) {
   }
 }
 
+void Canvas::clearSelection() {
+  selected = false;
+  selectionArea.clear();
+  selectionBorder.clear();
+  delete selection;
+}
+
 void
 Canvas::handleSelectRectClick(wxPoint &pt)
 {
@@ -696,9 +704,13 @@ Canvas::handleSelectRectClick(wxPoint &pt)
     updateBuffer(p);
     currentTxn.update(p);
   }
+  // Case 2)
   else {
-    // Case 2)
-
+    if (!selection->isWithinBounds(pt)) {
+      printf("not in bounds\n");
+      updateBuffer(selectionBorder, WHITE);
+      clearSelection();
+    }
   }
 
 }
@@ -711,7 +723,6 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
    * 1. User hasn't made a selection
    *    - Have to draw the selection border
    *    - Leverate the drawRectangle() function
-   *    TODO make the border use DASHED lines
    *
    * 2. User has a selection
    *    - Have to move the selected pixels to the
@@ -768,9 +779,7 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
       selectionBorder[i].y += yOffset;
     }
     updateBuffer(selectionBorder, WHITE);
-    selected = false;
-//    selectionArea.clear();
-//    selectionBorder.clear();
+    clearSelection();
   }
   else {
   /*
@@ -786,6 +795,8 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
     int startY = MIN(p0.y, p1.y);
     int endX = startX + _width;
     int endY = startY + _height;
+
+    selection = new RectangleSelection(p0, p1);
 
     /* Set the selectionArea pixels */
     int i, j, k=0;
