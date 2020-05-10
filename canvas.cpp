@@ -346,7 +346,7 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       break;
     case DrawRect:
       updateBuffer(
-          drawRectangle(startPos, currPos, txn),
+          drawRectangle(startPos, currPos, txn, 3),
           color);
       currentTxn = txn;
       break;
@@ -576,7 +576,8 @@ Canvas::fill(const wxPoint &p, const Color &color, Transaction &txn) {
 }
 
 std::vector<wxPoint>
-Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
+Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1,
+    Transaction &txn, const int &_width)
 {
   /*
    * Approach:
@@ -602,10 +603,10 @@ Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
     wxPoint p3 = wxPoint(p1.x, p0.y);
     std::vector<wxPoint> lines[4];
 
-    lines[0] = lerp(p0, p3, 5);
-    lines[1] = lerp(p1, p3, 5);
-    lines[2] = lerp(p1, p2, 5);
-    lines[3] = lerp(p0, p2, 5);
+    lines[0] = lerp(p0, p3, _width);
+    lines[1] = lerp(p1, p3, _width);
+    lines[2] = lerp(p1, p2, _width);
+    lines[3] = lerp(p0, p2, _width);
 
     int i;
     for (i=0; i < 4; i++) {
@@ -615,6 +616,21 @@ Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn)
 
   updateTransaction(txn, points);
   return points;
+}
+
+/*
+ * Used for generating Selection Border
+ * - Given a border, remove points on the border
+ */
+void Canvas::makeDashed(std::vector<wxPoint> &border) {
+  int i;
+  for (i=0; i < border.size()-4; i++) {
+    if (i % 5 == 0) {
+      if (i+3 >= border.size())
+        break;
+      border.erase(border.begin() + i+3);
+    }
+  }
 }
 
 void
@@ -664,7 +680,8 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
     if (!isNewTxn)
       revertTransaction(selectTxn);
 
-    selectionBorder = drawRectangle(p0, p1, txn);
+    selectionBorder = drawRectangle(p0, p1, txn, 1);
+    makeDashed(selectionBorder);
     updateBuffer(
         selectionBorder,
         SELECT);
@@ -708,6 +725,8 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
     }
     updateBuffer(selectionBorder, WHITE);
     selected = false;
+//    selectionArea.clear();
+//    selectionBorder.clear();
   }
   else {
   /*

@@ -104,12 +104,14 @@ class Canvas : public wxPanel {
     void cpySelectToClip();
 
     std::vector<wxPoint> drawFreeHand(Transaction &txn);
-    std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1, Transaction &txn);
+    std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1,
+        Transaction &txn, const int &_width);
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
     std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
     void fill(const wxPoint &p, const Color &color, Transaction &txn);
 
     /* Event handlers for rectangle selection */
+    void makeDashed(std::vector<wxPoint> &border);
     void handleSelectRectClick(wxPoint &pt);
     void handleSelectRectMove(const wxPoint &p0, const wxPoint &p1);
     void handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1);
