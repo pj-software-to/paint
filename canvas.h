@@ -7,6 +7,7 @@
 
 #include "transaction.h"
 #include "pixel.h"
+#include "selection.h"
 
 enum ToolType
 {
@@ -53,10 +54,11 @@ class Canvas : public wxPanel {
     Transaction currentTxn;
     Transaction selectTxn;
 
-    /* TRUE if user has made a selection */
+    /* Selection tool fields */
     bool selected;
     std::vector<Pixel> selectionArea;
     std::vector<wxPoint> selectionBorder;
+    Selection *selection;
 
     /* Sampled points for freehand */
     std::vector<wxPoint> freehand;
@@ -111,7 +113,9 @@ class Canvas : public wxPanel {
     void fill(const wxPoint &p, const Color &color, Transaction &txn);
 
     /* Event handlers for rectangle selection */
-    void makeDashed(std::vector<wxPoint> &border);
+    void clearSelection();
+
+    std::vector<wxPoint> makeDashed(const std::vector<wxPoint> &border);
     void handleSelectRectClick(wxPoint &pt);
     void handleSelectRectMove(const wxPoint &p0, const wxPoint &p1);
     void handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1);
