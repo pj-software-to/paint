@@ -105,19 +105,23 @@ class Canvas : public wxPanel {
     bool pasteFromClip(Transaction &txn);
     void cpySelectToClip();
 
-    std::vector<wxPoint> drawFreeHand(Transaction &txn);
-    std::vector<wxPoint> drawRectangle(const wxPoint &p0, const wxPoint &p1,
-        Transaction &txn, const int &_width);
-    std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn);
+    std::vector<wxPoint> drawFreeHand(const wxPoint &currPos, Transaction &txn, const int &_width);
+    std::vector<wxPoint> drawRectangle(const wxPoint &currPos, Transaction &txn, const int &_width);
+    std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn, const int &_width);
     std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
     void fill(const wxPoint &p, const Color &color, Transaction &txn);
 
     /* Event handlers for rectangle selection */
     void clearSelection();
 
+    void getSelectionArea(std::vector<Pixel> &area, RectangleSelection *selection);
+    void getSelectionArea(std::vector<Pixel> &area, CircleSelection *selection);
+    void getSelectionArea(std::vector<Pixel> &area, LassoSelection *selection);
+
     std::vector<wxPoint> makeDashed(const std::vector<wxPoint> &border);
-    void handleSelectRectClick(wxPoint &pt);
-    void handleSelectRectMove(const wxPoint &p0, const wxPoint &p1);
+    void handleSelectionClick(wxPoint &pt);
+    void handleSelectionMove(const wxPoint &currPos,
+         std::vector<wxPoint> (Canvas::*drawBorder)(const wxPoint&, Transaction &, const int&));
     void handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1);
 
     void move(const std::vector<Pixel> &pixels,

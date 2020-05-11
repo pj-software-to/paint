@@ -4,6 +4,9 @@
 
 #ifndef PAINT_SELECTION_H
 #define PAINT_SELECTION_H
+
+#include "pixel.h"
+
 /*
  * Base class that contains fcn isWithinBounds()
  * which should be overridden by all child classes
@@ -18,7 +21,7 @@ public:
   wxCoord maxY;
 
   inline virtual bool isWithinBounds(wxPoint &point);
-  
+
   inline int getHeight() {
     return (int)(maxY - minY) + 1;
   }
@@ -41,6 +44,7 @@ class RectangleSelection : public Selection {
 public:
   inline RectangleSelection();
   inline RectangleSelection(wxPoint p0, wxPoint p1);
+
   inline bool isWithinBounds(wxPoint &point);
 };
 
@@ -48,6 +52,7 @@ class CircleSelection : public Selection {
 public:
   wxPoint _c;
   int _r;
+
   bool isWithinBounds(wxPoint &point);
 };
 

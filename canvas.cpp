@@ -383,7 +383,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
       currentTxn = txn;
       break;
     case SlctRect:
-      handleSelectRectClick(startPos);
+      handleSelectionClick(startPos);
       break;
     case SlctCircle:
       break;
@@ -407,7 +407,7 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
     case Pencil:
       freehand.push_back(currPos);
       updateBuffer(
-        drawFreeHand(txn),
+        drawFreeHand(currPos, txn, 5),
         color);
       currentTxn = txn;
       break;
@@ -419,29 +419,31 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       break;
     case DrawRect:
       updateBuffer(
-          drawRectangle(startPos, currPos, txn, 3),
+          drawRectangle(currPos, txn, 3),
           color);
       currentTxn = txn;
       break;
     case DrawCircle:
       updateBuffer(
-        drawCircle(currPos, txn),
+        drawCircle(currPos, txn, 5),
         color);
       currentTxn = txn;
       break;
     case Eraser:
       freehand.push_back(currPos);
       updateBuffer(
-          drawFreeHand(txn),
+          drawFreeHand(currPos, txn, 5),
           WHITE);
       currentTxn = txn;
       break;
     case SlctRect:
-      handleSelectRectMove(startPos, currPos);
+      handleSelectionMove(currPos, &Canvas::drawRectangle);
       break;
     case SlctCircle:
+      handleSelectionMove(currPos, &Canvas::drawCircle);
       break;
     case Lasso:
+      handleSelectionMove(currPos, &Canvas::drawFreeHand);
       break;
     default:
       break;
@@ -469,7 +471,7 @@ void Canvas::mouseReleased(wxMouseEvent &evt)
 }
 
 std::vector<wxPoint>
-Canvas::drawFreeHand(Transaction &txn)
+Canvas::drawFreeHand(const wxPoint &currPos, Transaction &txn, const int &_width)
 {
   if (!isNewTxn) {
     revertTransaction(currentTxn);
@@ -482,7 +484,7 @@ Canvas::drawFreeHand(Transaction &txn)
     p0 = freehand[i];
     p1 = freehand[i+1];
 
-    _pts = lerp(p0, p1, 5);
+    _pts = lerp(p0, p1, _width);
     points.insert(points.end(), _pts.begin(), _pts.end());
   }
 
@@ -491,7 +493,7 @@ Canvas::drawFreeHand(Transaction &txn)
 }
 
 std::vector<wxPoint>
-Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
+Canvas::drawCircle(const wxPoint &currPos, Transaction &txn, const int &_width) {
   std::vector<wxPoint> points;
   /*
    * Steps:
@@ -561,7 +563,7 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn) {
       p0 = draft[i];
       p1 = draft[i+1];
 
-      pts = lerp(p0, p1, 5);
+      pts = lerp(p0, p1, _width);
       points.insert(points.end(), pts.begin(), pts.end());
     } 
   }
@@ -649,8 +651,7 @@ Canvas::fill(const wxPoint &p, const Color &color, Transaction &txn) {
 }
 
 std::vector<wxPoint>
-Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1,
-    Transaction &txn, const int &_width)
+Canvas::drawRectangle(const wxPoint &p1, Transaction &txn, const int &_width)
 {
   /*
    * Approach:
@@ -672,14 +673,14 @@ Canvas::drawRectangle(const wxPoint &p0, const wxPoint &p1,
   std::vector<wxPoint> points;
 
   {
-    wxPoint p2 = wxPoint(p0.x, p1.y);
-    wxPoint p3 = wxPoint(p1.x, p0.y);
+    wxPoint p2 = wxPoint(startPos.x, p1.y);
+    wxPoint p3 = wxPoint(p1.x, startPos.y);
     std::vector<wxPoint> lines[4];
 
-    lines[0] = lerp(p0, p3, _width);
+    lines[0] = lerp(startPos, p3, _width);
     lines[1] = lerp(p1, p3, _width);
     lines[2] = lerp(p1, p2, _width);
-    lines[3] = lerp(p0, p2, _width);
+    lines[3] = lerp(startPos, p2, _width);
 
     int i;
     for (i=0; i < 4; i++) {
@@ -742,7 +743,7 @@ void Canvas::clearSelection() {
 }
 
 void
-Canvas::handleSelectRectClick(wxPoint &pt)
+Canvas::handleSelectionClick(wxPoint &pt)
 {
   /*
    * Two cases to consider:
@@ -769,14 +770,69 @@ Canvas::handleSelectRectClick(wxPoint &pt)
 
 }
 
+/*
+ * Functions to set the selection area
+ * based on the Selection object.
+ * One function for each type selection.
+ */
 void
-Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
+Canvas::getSelectionArea(
+    std::vector<Pixel> &area,
+    RectangleSelection *selection)
+{
+  /*
+   * The width and height of the selection
+   * should include the pixels occupied
+   * by the selection border
+   */
+  int _width = (selection->maxX - selection->minX) + 1;
+  int _height = (selection->maxY - selection->minY) + 1;
+  area.resize(_width * _height);
+
+  int startX = selection->minX;
+  int startY = selection->minY;
+  int endX = startX + _width;
+  int endY = startY + _height;
+
+  /* Set the selectionArea pixels */
+  int i, j, k=0;
+  Pixel p;
+  wxPoint pt;
+  for (i=startX; i < endX; i++) {
+    for (j=startY; j < endY; j++) {
+      pt = wxPoint(i, j);
+      p = getPixel(pt);
+      area[k] = p;
+      k++;
+    }
+  }
+}
+
+void
+Canvas::getSelectionArea(
+    std::vector<Pixel> &selectionArea,
+    CircleSelection *selection)
+{
+  // TODO
+}
+
+void
+Canvas::getSelectionArea(
+    std::vector<Pixel> &selectionArea,
+    LassoSelection *selection)
+{
+  // TODO
+}
+
+void
+Canvas::handleSelectionMove(const wxPoint &currPos,
+  std::vector<wxPoint> (Canvas::*drawBorder)(const wxPoint&, Transaction &, const int&))
 {
   /*
    * Two cases to consider:
    * 1. User hasn't made a selection
    *    - Have to draw the selection border
-   *    - Leverate the drawRectangle() function
+   *    - Leverage the drawRectangle, drawCircle, and drawFreehand functions
    *
    * 2. User has a selection
    *    - Have to move the selected pixels to the
@@ -787,7 +843,7 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
     if (!isNewTxn)
       revertTransaction(currentTxn);
 
-    selectionBorder = drawRectangle(p0, p1, txn, 1);
+    selectionBorder = (this->*drawBorder)(currPos, txn, 1);
     updateBuffer(
         makeDashed(selectionBorder),
         SELECT);
@@ -796,8 +852,8 @@ Canvas::handleSelectRectMove(const wxPoint &p0, const wxPoint &p1)
     currentTxn = txn;
   }
   else {
-    int xOffset = p1.x - p0.x;
-    int yOffset = p1.y - p0.y;
+    int xOffset = currPos.x - startPos.x;
+    int yOffset = currPos.y - startPos.y;
     Transaction txn;
     move(selectionArea, xOffset, yOffset, txn);
     currentTxn = txn;
@@ -825,37 +881,22 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
       selectionBorder[i].x += xOffset;
       selectionBorder[i].y += yOffset;
     }
-//    updateBuffer(selectionBorder, WHITE);
     clearSelection();
   }
   else {
-  /*
-   * The width and height of the selection
-   * should include the pixels occupied
-   * by the selection border
-   */
-    int _width = abs(p1.x - p0.x) + 1;
-    int _height = abs(p1.y - p0.y) + 1;
-    selectionArea.resize(_width * _height);
+    switch (toolType) {
+      case SlctRect:
+        selection = new RectangleSelection(p0, p1);
+        getSelectionArea(selectionArea,
+            dynamic_cast<RectangleSelection *>(selection));
+        break;
+      case SlctCircle:
 
-    int startX = MIN(p0.x, p1.x);
-    int startY = MIN(p0.y, p1.y);
-    int endX = startX + _width;
-    int endY = startY + _height;
-
-    selection = new RectangleSelection(p0, p1);
-
-    /* Set the selectionArea pixels */
-    int i, j, k=0;
-    Pixel p;
-    wxPoint pt;
-    for (i=startX; i < endX; i++) {
-      for (j=startY; j < endY; j++) {
-        pt = wxPoint(i, j);
-        p = getPixel(pt);
-        selectionArea[k] = p;
-        k++;
-      }
+        break;
+      case Lasso:
+        break;
+      default:
+        break;
     }
 
     selected = true;
