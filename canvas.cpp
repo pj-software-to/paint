@@ -228,7 +228,7 @@ bool Canvas::pasteFromClip(Transaction &txn) {
       N = bmpImage.GetHeight();
       M = bmpImage.GetWidth();
       buffer = bmpImage.GetData();
-      int ind;
+
       int x, y;
       for (y=0; y<std::min(height, N); y++) {
         for (x=0; x<std::min(width, M); x++) {
@@ -236,6 +236,7 @@ bool Canvas::pasteFromClip(Transaction &txn) {
           Pixel pixel;
           Color prev_c = getPixelColor(p); /* prev color */
           Color c;
+          int ind;
 
           ind = LOC(x, y, M);
           c = Color(
@@ -262,10 +263,31 @@ bool Canvas::pasteFromClip(Transaction &txn) {
 }
 
 void Canvas::cpySelectToClip() {
+  /* 
+   * Note - Non-rectangular selection:
+   * Use alpha channel to accept non-rectangular
+   * selection areas.
+   * e.g. Set alpha to 1 for transparent, so when
+   * pasting, we can check alpha channel of 
+   * the corresponding pixel to decide whether to
+   * update it or not.
+   */
+  if (selected) {
 
+    int N, M;
+    N = selectedSize.GetHeight();
+    M = selectedSize.GetWidth();
+
+    Pixel pixel;
+    int i;
+    for (i=0; i<selectionArea; i++) {
+      pixel = selectionArea[i];
+
+    }
+  }
 }
 
- void Canvas::keyDownEvent(wxKeyEvent &evt) {
+void Canvas::keyDownEvent(wxKeyEvent &evt) {
   char uc = evt.GetUnicodeKey();
   if (evt.ControlDown()) {
     switch (uc) {
@@ -799,6 +821,7 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
         k++;
       }
     }
+    selectedSize = wxSize(_width, _height);
     selected = true;
   }
 }
