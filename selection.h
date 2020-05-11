@@ -6,6 +6,7 @@
 #define PAINT_SELECTION_H
 
 #include "pixel.h"
+#include "helper.h"
 
 /*
  * Base class that contains fcn isWithinBounds()
@@ -51,9 +52,11 @@ public:
 class CircleSelection : public Selection {
 public:
   wxPoint _c;
-  int _r;
+  double _r;
 
-  bool isWithinBounds(wxPoint &point);
+  inline CircleSelection(wxPoint p0, wxPoint p1);
+
+  inline bool isWithinBounds(wxPoint &point);
 };
 
 class LassoSelection : public Selection {
@@ -61,7 +64,7 @@ public:
   bool isWithinBounds(wxPoint &point);
 };
 
-
+/************** RectangleSelection ****************/
 inline RectangleSelection::RectangleSelection(){}
 inline RectangleSelection::RectangleSelection(wxPoint p0, wxPoint p1) {
   minX = p0.x < p1.x ? p0.x : p1.x;
@@ -77,7 +80,26 @@ inline bool RectangleSelection::isWithinBounds(wxPoint &pt) {
   return true;
 }
 
-inline bool Selection::isWithinBounds(wxPoint &pt) {
-  return true;
+/************** CircleSelection ****************/
+inline CircleSelection::CircleSelection(wxPoint p0, wxPoint p1){
+  _r = length(p1, p0)/2;
+
+  wxRealVec v;
+  wxVec _v = p1 - p0;
+  v = wxRealVec((double)_v.x, (double)_v.y);
+  v = normalize(v);
+
+  wxRealPoint _curr(p0);
+  _c = wxPoint(_curr + _r*v);
+
+  minX = _c.x - _r;
+  maxX = _c.x + _r;
+  minY = _c.y - _r;
+  maxY = _c.y + _r;
+}
+
+inline bool CircleSelection::isWithinBounds(wxPoint &point)
+{
+  return (squaredLength(point, _c) < _r*_r);
 }
 #endif //PAINT_SELECTION_H

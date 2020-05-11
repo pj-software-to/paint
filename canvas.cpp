@@ -386,6 +386,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
       handleSelectionClick(startPos);
       break;
     case SlctCircle:
+      handleSelectionClick(startPos);
       break;
     case Lasso:
       break;
@@ -459,7 +460,8 @@ void Canvas::mouseReleased(wxMouseEvent &evt)
   wxPoint pt = wxPoint(evt.GetX(), evt.GetY());
   switch (toolType) {
     case SlctRect:
-      handleSelectRectRelease(startPos, pt);
+    case SlctCircle:
+      handleSelectionRelease(startPos, pt);
       wxWindow::Refresh();
       break;
     default:
@@ -813,7 +815,27 @@ Canvas::getSelectionArea(
     std::vector<Pixel> &selectionArea,
     CircleSelection *selection)
 {
-  // TODO
+  wxPoint c = selection->_c;
+  double r = selection->_r;
+
+  int minX, maxX, minY, maxY;
+  minX = selection->minX;
+  maxX = selection->maxX;
+  minY = selection->minY;
+  maxY = selection->maxY;
+
+  int x, y;
+  wxPoint pt;
+  for (x=minX; x < maxX+1; x++) {
+    for (y=minY; y < maxY+1; y++) {
+      pt = wxPoint(x, y);
+      if (squaredLength(pt, c) <= r*r) {
+        selectionArea.push_back(
+            getPixel(pt));
+      }
+    }
+  }
+
 }
 
 void
@@ -824,6 +846,12 @@ Canvas::getSelectionArea(
   // TODO
 }
 
+/*
+ * Handles mouseMove event for selection tools
+ * Takes in a "drawBorder" parameter which points to one
+ * of: drawRectangle(), drawCircle(), or drawFreehand()
+ * depending on the tool type.
+ */
 void
 Canvas::handleSelectionMove(const wxPoint &currPos,
   std::vector<wxPoint> (Canvas::*drawBorder)(const wxPoint&, Transaction &, const int&))
@@ -832,8 +860,6 @@ Canvas::handleSelectionMove(const wxPoint &currPos,
    * Two cases to consider:
    * 1. User hasn't made a selection
    *    - Have to draw the selection border
-   *    - Leverage the drawRectangle, drawCircle, and drawFreehand functions
-   *
    * 2. User has a selection
    *    - Have to move the selected pixels to the
    *      new position
@@ -861,7 +887,7 @@ Canvas::handleSelectionMove(const wxPoint &currPos,
 }
 
 void
-Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
+Canvas::handleSelectionRelease(const wxPoint &p0, const wxPoint &p1)
 {
   /*
    * Two cases to consider:
@@ -869,8 +895,7 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
    *      The release action will complete the selection
    *      process and define the selectionArea.
    * 2. User has a selection already
-   *      Update the selection pixels to the
-   *      translated area
+   *      Clear the selection.
    */
   if (selected) {
     int xOffset = p1.x - p0.x;
@@ -891,14 +916,15 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
             dynamic_cast<RectangleSelection *>(selection));
         break;
       case SlctCircle:
-
+        selection = new CircleSelection(p0, p1);
+        getSelectionArea(selectionArea,
+            dynamic_cast<CircleSelection *>(selection));
         break;
       case Lasso:
         break;
       default:
         break;
     }
-
     selected = true;
   }
 }

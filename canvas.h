@@ -122,7 +122,7 @@ class Canvas : public wxPanel {
     void handleSelectionClick(wxPoint &pt);
     void handleSelectionMove(const wxPoint &currPos,
          std::vector<wxPoint> (Canvas::*drawBorder)(const wxPoint&, Transaction &, const int&));
-    void handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1);
+    void handleSelectionRelease(const wxPoint &p0, const wxPoint &p1);
 
     void move(const std::vector<Pixel> &pixels,
         const int &xOffset, const int &yOffset, Transaction &txn);
