@@ -212,7 +212,12 @@ bool Canvas::pasteFromClip(Transaction &txn) {
        * (1) Read and cast clipboard bitmap as wxImage
        * (2) Get wxImage's internal data buffer which contains
        *     RGBRGBRGB.. data format of pixels, row major. 
-       * (3) Iterate through, add previous color to transactions,
+       * (3) Check corresponding alpha values for each pixel.
+       *     If alpha value of pixel is NOT 0 (i.e. not completely
+       *     transparent), then copy that pixel's RGB.
+       *     If alpha value of pixel is 0, then ignore pixel, as
+       *     is transparent.
+       * (4) Iterate through, add previous color to transactions,
        *     then update display buffer.
        * 
        * Note: Could try and optimize using memset, this
@@ -852,7 +857,7 @@ Canvas::handleSelectRectRelease(const wxPoint &p0, const wxPoint &p1)
         k++;
       }
     }
-    
+
     selected = true;
   }
 }
