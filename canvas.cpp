@@ -241,8 +241,8 @@ bool Canvas::pasteFromClip(Transaction &txn) {
       alpha = bmpImage.GetAlpha();
       hasAlpha = bmpImage.HasAlpha(); 
 
-      printf("Paste bitmap: %dx%d. Alpha: 0x%x\n",
-        N, M, bmpImage.HasAlpha(), alpha);
+      printf("Paste bitmap: %dx%d. Alpha: 0x%p\n", N, M, 
+        (void *)alpha);
       int x, y;
       for (y=0; y<std::min(height, N); y++) {
         for (x=0; x<std::min(width, M); x++) {
@@ -293,11 +293,6 @@ bool Canvas::pasteFromClip(Transaction &txn) {
    * update it or not.
    */
   if (selected) {
-    if (this->cpyAlpha != NULL) {
-      free(this->cpyAlpha);
-      this->cpyAlpha = NULL;
-    }
-
     /*
      * Steps:
      * (1) Do one pass on data to set every pixel's
@@ -356,7 +351,6 @@ bool Canvas::pasteFromClip(Transaction &txn) {
     bmp.SetDepth(4*8*sizeof(unsigned char));
     if (wxTheClipboard->Open()) {
       wxTheClipboard->SetData(new wxBitmapDataObject(bmp));
-      this->cpyAlpha = alpha;
       wxTheClipboard->Close();
       printf("Copied bitmap: %dx%d, hasAlpha=%d, depth=%d\n", N, M,
         img.HasAlpha(), bmp.GetDepth());;

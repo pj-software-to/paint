@@ -56,7 +56,6 @@ class Canvas : public wxPanel {
     std::vector<Pixel> selectionArea;
     std::vector<wxPoint> selectionBorder;
     Selection *selection;
-    unsigned char *cpyAlpha = NULL;
 
     /* Sampled points for freehand */
     std::vector<wxPoint> freehand;
