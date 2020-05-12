@@ -45,6 +45,7 @@ Canvas::Canvas(wxFrame *parent, unsigned int width, unsigned int height) :
 wxPanel(parent) {
   this->width = width;
   this->height = height;
+  this->SetFocus();
 
   color = Color(0, 0, 0);
 
@@ -358,6 +359,8 @@ void Canvas::keyUpEvent(wxKeyEvent & evt) {
  */
 void Canvas::mouseDown(wxMouseEvent &evt)
 {
+  this->SetFocus();
+  
   /* Always should be left is down */
   assert(evt.LeftIsDown());
 

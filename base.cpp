@@ -27,7 +27,9 @@ IMPLEMENT_APP(MainApp)
 
 bool MainApp::OnInit()
 {
+#ifdef __APPLE__
   wxSystemOptions::SetOption("mac.toolbar.no-native", 1);
+#endif
 
   wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
   frame = new MainFrame(wxT("Hello wxDC"), wxPoint(50,50),
