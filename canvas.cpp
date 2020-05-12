@@ -958,16 +958,15 @@ Canvas::move(
     for (i=0; i < selectionArea.size(); i++) {
       pixel = selectionArea[i];
 
-      oldPt = wxPoint(pixel.x, pixel.y);
-      txn.update(pixel);
-      whitePixel = Pixel(Color(255, 255, 255), oldPt);
-
       newPt = wxPoint(
           pixel.x + xOffset,
           pixel.y + yOffset);
       oldPixel = Pixel(getPixelColor(newPt), newPt);
       txn.update(oldPixel);
 
+      oldPt = wxPoint(pixel.x, pixel.y);
+      txn.update(pixel);
+      whitePixel = Pixel(Color(255, 255, 255), oldPt);
       updateBuffer(whitePixel);
     }
   }

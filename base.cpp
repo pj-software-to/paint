@@ -57,7 +57,7 @@ MainFrame::MainFrame(const wxString &title,
 {
   /* Create sidebar with tools */
   std::string DPATH(DATA_PATH);
-  std::string exitP = DPATH + "/exit.png";
+  std::string bucketP = DPATH + "/bucket.png";
   std::string pencilP = DPATH + "/pencil1.png";
   std::string circleP = DPATH + "/circle.png";
   std::string rectP = DPATH + "/rectangle.png";
@@ -68,7 +68,7 @@ MainFrame::MainFrame(const wxString &title,
   std::string lassoP = DPATH + "/lasso.png";
 
   wxImage::AddHandler(new wxPNGHandler);
-  wxBitmap exit(wxString(exitP), wxBITMAP_TYPE_PNG);
+  wxBitmap bucket(wxString(bucketP), wxBITMAP_TYPE_PNG);
   wxBitmap pencil(wxString(pencilP), wxBITMAP_TYPE_PNG);
   wxBitmap circle(wxString(circleP), wxBITMAP_TYPE_PNG);
   wxBitmap rectangle(wxString(rectP), wxBITMAP_TYPE_PNG);
@@ -83,7 +83,7 @@ MainFrame::MainFrame(const wxString &title,
   /* Freehand Drawing Tools */
   toolBar->AddTool(BTN_Pencil, wxT("Pencil"), pencil);
   toolBar->AddTool(BTN_Eraser, wxT("Eraser"), eraser);
-  toolBar->AddTool(BTN_Fill, wxT("Fill"), exit);
+  toolBar->AddTool(BTN_Fill, wxT("Fill"), bucket);
 
   /* Predefined Shapes */
   toolBar->AddTool(BTN_Draw_line, wxT("Line"), line);
