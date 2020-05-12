@@ -35,9 +35,6 @@ class Canvas : public wxPanel {
     unsigned int width;
     unsigned int height;
 
-    /* The colour selected by the user */
-    Color color;
-
     /* The previous mouse position
      * before mouse move event */
     wxPoint prevPos;
@@ -131,6 +128,9 @@ class Canvas : public wxPanel {
     Canvas(wxFrame *parent);
     Canvas(wxFrame *parent, unsigned int width, unsigned int height);
     ToolType toolType;
+
+    /* The colour selected by the user */
+    Color color;
 
     /* Screen refresh event handlers */
     void paintEvent(wxPaintEvent & evt);

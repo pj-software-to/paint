@@ -389,6 +389,8 @@ void Canvas::mouseDown(wxMouseEvent &evt)
       handleSelectionClick(startPos);
       break;
     case Lasso:
+      freehand.clear();
+      freehand.push_back(wxPoint(x, y));
       break;
     default:
       break;
@@ -444,6 +446,7 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
       handleSelectionMove(currPos, &Canvas::drawCircle);
       break;
     case Lasso:
+      freehand.push_back(currPos);
       handleSelectionMove(currPos, &Canvas::drawFreeHand);
       break;
     default:
@@ -826,10 +829,10 @@ Canvas::getSelectionArea(
 
   int x, y;
   wxPoint pt;
-  for (x=minX; x < maxX+1; x++) {
-    for (y=minY; y < maxY+1; y++) {
+  for (x=minX; x < maxX; x++) {
+    for (y=minY; y < maxY; y++) {
       pt = wxPoint(x, y);
-      if (squaredLength(pt, c) <= r*r) {
+      if (squaredLength(pt, c) < r*r) {
         selectionArea.push_back(
             getPixel(pt));
       }

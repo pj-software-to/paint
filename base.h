@@ -7,6 +7,9 @@ class MainFrame: public wxFrame {
 public:
   MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
   wxToolBar *toolBar;
+  wxColourPickerCtrl *colorPicker;
+
+  void OnColourChanged(wxColourPickerEvent &evt);
 
   DECLARE_EVENT_TABLE()
 };
@@ -16,6 +19,8 @@ class MainApp: public wxApp {
     virtual bool OnInit();
     MainFrame *frame;
     Canvas *canvas;
+
+    void OnColourChanged(wxColourPickerEvent &evt);
 
     void SetCanvasPencil(wxCommandEvent& WXUNUSED(event));
     void SetCanvasDrawLine(wxCommandEvent& WXUNUSED(event));
@@ -40,7 +45,8 @@ enum
   BTN_Slct_rect = wxID_HIGHEST + 6,
   BTN_Slct_circ = wxID_HIGHEST + 7,
   BTN_Slct_lasso = wxID_HIGHEST + 8,
-  BTN_Fill = wxID_HIGHEST + 9
+  BTN_Fill = wxID_HIGHEST + 9,
+  CLR_PICKER = wxID_HIGHEST + 10
 };
 
 #endif

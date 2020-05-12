@@ -3,6 +3,9 @@
 #include <wx/wx.h>
 #endif
 
+#include <wx/clrpicker.h>
+#include <wx/sysopt.h>
+
 #include <string>
 #include <iostream>
 #include "canvas.h"
@@ -14,13 +17,18 @@
 #define MAIN_FRAME_WIDTH 1100
 #define MAIN_FRAME_HEIGHT 600
 
+#define wxMAC_USE_NATIVE_TOOLBAR 1
+
 BEGIN_EVENT_TABLE( MainFrame, wxFrame )
+  EVT_COLOURPICKER_CHANGED(CLR_PICKER, MainApp::OnColourChanged)
 END_EVENT_TABLE()
 
 IMPLEMENT_APP(MainApp)
 
 bool MainApp::OnInit()
 {
+  wxSystemOptions::SetOption("mac.toolbar.no-native", 1);
+
   wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
   frame = new MainFrame(wxT("Hello wxDC"), wxPoint(50,50),
     wxSize(MAIN_FRAME_WIDTH, MAIN_FRAME_HEIGHT));
@@ -85,6 +93,12 @@ MainFrame::MainFrame(const wxString &title,
   toolBar->AddTool(BTN_Slct_circ, wxT("Select Circle"), slctCircle);
   toolBar->AddTool(BTN_Slct_lasso, wxT("Lasso"), lasso);
 
+  /* Colour picker */
+  wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(
+      toolBar, CLR_PICKER, *wxBLACK, wxDefaultPosition, wxDefaultSize,
+      wxCLRP_DEFAULT_STYLE, wxDefaultValidator, wxEmptyString);
+  toolBar->AddControl(colourPickerCtrl);
+
   /* Render */
   toolBar->Realize();
 
@@ -107,6 +121,7 @@ MainFrame::MainFrame(const wxString &title,
       wxCommandEventHandler(MainApp::SetCanvasSlctCircle));
   Connect(BTN_Slct_lasso, wxEVT_COMMAND_TOOL_CLICKED,
       wxCommandEventHandler(MainApp::SetCanvasLasso));
+
 }
 
 /*********** Event handlers to handle ONCLICK events for toolbar ************/
@@ -144,4 +159,11 @@ void MainApp::SetCanvasSlctCircle(wxCommandEvent& WXUNUSED(event)) {
 
 void MainApp::SetCanvasLasso(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = Lasso;
+}
+
+void MainApp::OnColourChanged(wxColourPickerEvent &evt) {
+  wxColour clr = evt.GetColour();
+  wxGetApp().canvas->color = Color(clr.Red(),
+      clr.Green(),
+      clr.Blue());
 }
