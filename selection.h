@@ -21,7 +21,7 @@ public:
   wxCoord maxX;
   wxCoord maxY;
 
-  inline virtual bool isWithinBounds(wxPoint &point);
+  inline virtual bool isWithinBounds(wxPoint &point) {}
 
   inline int getHeight() {
     return (int)(maxY - minY) + 1;
@@ -61,7 +61,7 @@ public:
 
 class LassoSelection : public Selection {
 public:
-  bool isWithinBounds(wxPoint &point);
+  inline bool isWithinBounds(wxPoint &point) {}
 };
 
 /************** RectangleSelection ****************/

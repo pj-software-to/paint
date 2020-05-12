@@ -5,6 +5,7 @@
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #include <wx/clipbrd.h>
+#include <wx/bitmap.h>
 #endif
 
 #include <unordered_set>
@@ -20,6 +21,7 @@
 #include "selection.h"
 
 #define LOC(x,y,w) (3*((y)*(w)+(x)))
+#define ALPHA_LOC(x,y,w) ((y)*(w)+(x))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
@@ -230,12 +232,17 @@ bool Canvas::pasteFromClip(Transaction &txn) {
       wxTheClipboard->GetData(data);
       bmpImage = data.GetBitmap().ConvertToImage();
 
-      unsigned char *buffer;
+      unsigned char *buffer, *alpha;
       unsigned int N, M;
+      bool hasAlpha;
       N = bmpImage.GetHeight();
       M = bmpImage.GetWidth();
       buffer = bmpImage.GetData();
+      alpha = bmpImage.GetAlpha();
+      hasAlpha = bmpImage.HasAlpha(); 
 
+      printf("Paste bitmap: %dx%d. Alpha: 0x%x\n",
+        N, M, bmpImage.HasAlpha(), alpha);
       int x, y;
       for (y=0; y<std::min(height, N); y++) {
         for (x=0; x<std::min(width, M); x++) {
@@ -245,17 +252,20 @@ bool Canvas::pasteFromClip(Transaction &txn) {
           Color c;
           int ind;
 
-          ind = LOC(x, y, M);
-          c = Color(
-            buffer[ind],
-            buffer[ind+1],
-            buffer[ind+2]
-          );
+          ind = ALPHA_LOC(x, y, M);
+          if (!hasAlpha || alpha[ind] != wxIMAGE_ALPHA_TRANSPARENT) {
+            ind = LOC(x, y, M);
+            c = Color(
+              buffer[ind],
+              buffer[ind+1],
+              buffer[ind+2]
+            );
 
-          pixel = Pixel(c, p);
-          txn.update(Pixel(prev_c, p));
+            pixel = Pixel(c, p);
+            txn.update(Pixel(prev_c, p));
 
-          updateBuffer(pixel);
+            updateBuffer(pixel);
+          }
         }
       }
     } 
@@ -268,9 +278,12 @@ bool Canvas::pasteFromClip(Transaction &txn) {
     wxTheClipboard->Close();
   }
 }
-
-void Canvas::cpySelectToClip() {
+ void Canvas::cpySelectToClip() {
   /* 
+   * Alpha channel issue:
+   * https://forums.wxwidgets.org/viewtopic.php?t=46865&p=197052
+   * http://trac.wxwidgets.org/ticket/16198
+   * 
    * Note - Non-rectangular selection:
    * Use alpha channel to accept non-rectangular
    * selection areas.
@@ -280,18 +293,76 @@ void Canvas::cpySelectToClip() {
    * update it or not.
    */
   if (selected) {
+    if (this->cpyAlpha != NULL) {
+      free(this->cpyAlpha);
+      this->cpyAlpha = NULL;
+    }
+
+    /*
+     * Steps:
+     * (1) Do one pass on data to set every pixel's
+     *     alpha to 0 (i.e. transparent)
+     * (2) Do one pass on selectionArea. Since all pixels
+     *     contained in selectionArea have been selected,
+     *     set color of the respective pixel in 'data' 
+     *     and set the alpha of that pixel to 1.
+     * (3) Copy data onto clipboard as bitmap data
+     */
     assert(selection != NULL);
 
     int N, M;
+    int minX, minY;
+    unsigned char *data, *alpha;
+
     N = selection->getHeight();
     M = selection->getWidth();
+    minX = (int)selection->minX;
+    minY = (int)selection->minY;
 
-    Pixel pixel;
-    int i;
-    for (i=0; i<selectionArea.size(); i++) {
-      pixel = selectionArea[i];
+    data = (unsigned char *)malloc(3*N*M);
+    alpha = (unsigned char *)malloc(N*M);
 
+    // (1)
+    memset(data, 255, 3*N*M);
+    memset(alpha, wxIMAGE_ALPHA_TRANSPARENT, N*M);
+
+    // (2)
+    {
+      wxPoint p;
+      Pixel pixel;
+      int i;
+      for (i=0; i<selectionArea.size(); i++) {
+        pixel = selectionArea[i];
+        p = wxPoint(pixel.x, pixel.y);
+        
+        int x, y;
+        x = p.x - minX;
+        y = p.y - minY;
+
+        int ind;
+        ind = LOC(x, y, M);
+        data[ind] = pixel.color.r;
+        data[ind+1] = pixel.color.g;
+        data[ind+2] = pixel.color.b;         
+
+        ind = ALPHA_LOC(x, y, M);
+        alpha[ind] = wxIMAGE_ALPHA_OPAQUE;
+      }
     }
+
+    // (3)
+    wxImage img(M, N, data, alpha, false);
+    wxBitmap bmp(img, 4*8*sizeof(unsigned char));
+    bmp.SetDepth(4*8*sizeof(unsigned char));
+    if (wxTheClipboard->Open()) {
+      wxTheClipboard->SetData(new wxBitmapDataObject(bmp));
+      this->cpyAlpha = alpha;
+      wxTheClipboard->Close();
+      printf("Copied bitmap: %dx%d, hasAlpha=%d, depth=%d\n", N, M,
+        img.HasAlpha(), bmp.GetDepth());;
+    } else {
+      free(alpha);
+    }    
   }
 }
 
@@ -311,7 +382,6 @@ void Canvas::keyDownEvent(wxKeyEvent &evt) {
         break;
       case (KEY_C):
         if (!isCopy) {
-          printf("Copy!\n");
           isCopy = true;
           cpySelectToClip();           
         }
