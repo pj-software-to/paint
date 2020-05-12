@@ -753,29 +753,12 @@ void Canvas::clearSelection() {
 void
 Canvas::handleSelectionClick(wxPoint &pt)
 {
-  /*
-   * Two cases to consider:
-   * 1. User doesn't have any current selections
-   *    - Same as DrawRect
-   * 2. User has a selection
-   *    a) If user clicks ON the selection - they can move it
-   *    b) NOT on the selection - erase the selection border)
-   *    -> now the user no longer has a selection
-   */
-
-  // Case 1)
   if (!selected) {
-    Pixel p = Pixel(SELECT, pt);
-    updateBuffer(p);
-    currentTxn.update(p);
+    return;
   }
-  // Case 2)
-  else {
-    if (!selection->isWithinBounds(pt)) {
-      clearSelection();
-    }
+  if (!selection->isWithinBounds(pt)) {
+    clearSelection();
   }
-
 }
 
 /*
@@ -793,12 +776,12 @@ Canvas::getSelectionArea(
    * should include the pixels occupied
    * by the selection border
    */
-  int _width = (selection->maxX - selection->minX) + 1;
-  int _height = (selection->maxY - selection->minY) + 1;
+  int _width = (selection->maxX - selection->minX);
+  int _height = (selection->maxY - selection->minY);
   area.resize(_width * _height);
 
-  int startX = selection->minX;
-  int startY = selection->minY;
+  int startX = selection->minX + 1;
+  int startY = selection->minY + 1;
   int endX = startX + _width;
   int endY = startY + _height;
 
@@ -931,6 +914,9 @@ Canvas::handleSelectionRelease(const wxPoint &p0, const wxPoint &p1)
       default:
         break;
     }
+    selectionArea.insert(selectionArea.end(),
+        selectTxn.pixels.begin(),
+        selectTxn.pixels.end());
     selected = true;
   }
 }
@@ -943,47 +929,47 @@ Canvas::move(
 {
   /*
    * Step:
-   * 1. White out the /original/ selection
-   * 2. Save the border pixels
-   * 3. Translate the selection
+   * 1. Save all pixels
+   * 2. White out selection (should include border pixels)
+   * 3. Save border pixels to selectTxn (required
+   *      for mouseRelease event - have to revert
+   *      the border)
+   * 3. Translate the selection area
+   * 4. Draw border
    */
   if (!isNewTxn) {
     revertTransaction(currentTxn);
   }
   // (1) white out the selection
+
+  // (1) Save all pixels (old and new)
+  {
+    int i;
+    Pixel pixel, translatedPix;
+    wxPoint oldPt, newPt;
+    for (i=0; i < selectionArea.size(); i++) {
+      pixel = selectionArea[i];
+
+      newPt = wxPoint(pixel.x + xOffset, pixel.y + yOffset);
+      oldPt = wxPoint(pixel.x, pixel.y);
+      translatedPix = Pixel(getPixelColor(newPt), newPt);
+      txn.update(pixel);
+      txn.update(translatedPix);
+    }
+  }
+
+  // (2) white out pixels
   {
     int i;
     wxPoint oldPt, newPt;
     Pixel pixel, whitePixel, oldPixel;
     for (i=0; i < selectionArea.size(); i++) {
       pixel = selectionArea[i];
-
-      newPt = wxPoint(
-          pixel.x + xOffset,
-          pixel.y + yOffset);
-      oldPixel = Pixel(getPixelColor(newPt), newPt);
-      txn.update(oldPixel);
-
       oldPt = wxPoint(pixel.x, pixel.y);
-      txn.update(pixel);
       whitePixel = Pixel(Color(255, 255, 255), oldPt);
       updateBuffer(whitePixel);
     }
   }
-
-  // (2) Save border pixels
-  {
-    int i;
-    wxPoint pt, newPt;
-    selectTxn.pixels.resize(selectionBorder.size());
-    assert(selectionBorder.size() == selectTxn.pixels.size());
-    for (i=0; i < selectionBorder.size(); i++) {
-      pt = selectionBorder[i];
-      newPt = wxPoint(pt.x + xOffset, pt.y + yOffset);
-      selectTxn.pixels[i] = Pixel(getPixelColor(newPt), newPt);
-    }
-  }
-
   // (3) translate the selection
   {
     int i;
@@ -1001,5 +987,52 @@ Canvas::move(
 
       updateBuffer(newPixel);
     }
+  }
+
+  // (4-5) Save border pixels to select txn, draw border
+  {
+    int i;
+    wxPoint pt, newPt;
+    std::vector<wxPoint> border;
+    border.resize(selectionBorder.size());
+
+    assert(selectionBorder.size() == selectTxn.pixels.size());
+    for (i=0; i < selectionBorder.size(); i++) {
+      pt = selectionBorder[i];
+      newPt = wxPoint(pt.x + xOffset, pt.y + yOffset);
+      selectTxn.pixels[i] = Pixel(getPixelColor(newPt), newPt);
+      border[i] = newPt;
+    }
+
+    updateBuffer(makeDashed(border), SELECT);
+  }
+
+
+}
+
+void Canvas::translatePixels(const std::vector<Pixel> &pixels,
+    const int &xOff, const int &yOff)
+{
+  int i;
+  wxPoint newPt;
+  Pixel p, newPixel;
+  for (i=0; i < pixels.size(); i++) {
+    p = pixels[i];
+
+    newPt = wxPoint(p.x + xOff, p.y + yOff);
+    newPixel = Pixel(p.color, newPt);
+    updateBuffer(newPixel);
+  }
+}
+
+void Canvas::whiteOutPixels(const std::vector<Pixel> &pixels)
+{
+  int i;
+  Pixel p;
+  wxPoint pt;
+  for (i=0; i < pixels.size(); i++) {
+    pt = wxPoint(pixels[i].x, pixels[i].y);
+    p = Pixel(WHITE, pt);
+    updateBuffer(p);
   }
 }
