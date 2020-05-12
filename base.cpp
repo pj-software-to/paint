@@ -12,10 +12,10 @@
 #include "base.h"
 
 #define DATA_PATH "data"
-#define DEFAULT_WIDTH 1000
-#define DEFAULT_HEIGHT 500
-#define MAIN_FRAME_WIDTH 1100
-#define MAIN_FRAME_HEIGHT 600
+#define DEFAULT_WIDTH 1500 
+#define DEFAULT_HEIGHT 900 
+#define MAIN_FRAME_WIDTH 1400
+#define MAIN_FRAME_HEIGHT 900
 
 #define wxMAC_USE_NATIVE_TOOLBAR 1
 
