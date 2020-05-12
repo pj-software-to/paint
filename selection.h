@@ -21,7 +21,7 @@ public:
   wxCoord maxX;
   wxCoord maxY;
 
-  inline virtual bool isWithinBounds(wxPoint &point) {}
+  inline virtual bool isWithinBounds(wxPoint &point);
 
   inline int getHeight() {
     return (int)(maxY - minY) + 1;
@@ -61,8 +61,18 @@ public:
 
 class LassoSelection : public Selection {
 public:
-  inline bool isWithinBounds(wxPoint &point) {}
+  std::vector<wxPoint> border;
+
+  inline LassoSelection(std::vector<wxPoint> &_border);
+
+  inline bool isWithinBounds(wxPoint &point);
 };
+
+/************** Selection ****************/
+/* Never actually used, just return true */
+inline bool Selection::isWithinBounds(wxPoint &point) {
+  return true;
+}
 
 /************** RectangleSelection ****************/
 inline RectangleSelection::RectangleSelection(){}

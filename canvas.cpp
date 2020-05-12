@@ -828,7 +828,7 @@ Canvas::handleSelectionClick(wxPoint &pt)
 /*
  * Functions to set the selection area
  * based on the Selection object.
- * One function for each type selection.
+ * One function for each type of selection.
  */
 void
 Canvas::getSelectionArea(
@@ -962,6 +962,15 @@ Canvas::handleSelectionRelease(const wxPoint &p0, const wxPoint &p1)
     clearSelection();
   }
   else {
+    /*
+     * Selection area provided by the getSelectionArea()
+     * functions don't include the border pixels because
+     * when we reach this function, the bordr pixels
+     * will no longer have the original colours but the
+     * SELECT colour as the border is already rendered.
+     * We get the border pixels from the selectTxn
+     * because selectTxn has the original colours.
+     */
     switch (toolType) {
       case SlctRect:
         selection = new RectangleSelection(p0, p1);
@@ -993,20 +1002,22 @@ Canvas::move(
 {
   /*
    * Step:
-   * 1. Save all pixels
+   * 1. Save all pixels (the original selection, and the new
+   *    translaged pixels). This has to be done first in case
+   *    there is overlap between the original selection and
+   *    the new position.
    * 2. White out selection (should include border pixels)
-   * 3. Save border pixels to selectTxn (required
+   * 3. Translate the selection area
+   * 4. Save border pixels to selectTxn (required
    *      for mouseRelease event - have to revert
    *      the border)
-   * 3. Translate the selection area
-   * 4. Draw border
+   * 5. Redraw border
    */
   if (!isNewTxn) {
     revertTransaction(currentTxn);
   }
-  // (1) white out the selection
 
-  // (1) Save all pixels (old and new)
+  // (1) Save all pixels (original and translated)
   {
     int i;
     Pixel pixel, translatedPix;
@@ -1034,6 +1045,7 @@ Canvas::move(
       updateBuffer(whitePixel);
     }
   }
+
   // (3) translate the selection
   {
     int i;
@@ -1068,10 +1080,9 @@ Canvas::move(
       border[i] = newPt;
     }
 
+    /* draw border */
     updateBuffer(makeDashed(border), SELECT);
   }
-
-
 }
 
 void Canvas::translatePixels(const std::vector<Pixel> &pixels,
