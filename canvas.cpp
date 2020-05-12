@@ -953,14 +953,20 @@ Canvas::move(
   // (1) white out the selection
   {
     int i;
-    wxPoint oldPt;
-    Pixel pixel, whitePixel;
+    wxPoint oldPt, newPt;
+    Pixel pixel, whitePixel, oldPixel;
     for (i=0; i < selectionArea.size(); i++) {
       pixel = selectionArea[i];
 
       oldPt = wxPoint(pixel.x, pixel.y);
       txn.update(pixel);
       whitePixel = Pixel(Color(255, 255, 255), oldPt);
+
+      newPt = wxPoint(
+          pixel.x + xOffset,
+          pixel.y + yOffset);
+      oldPixel = Pixel(getPixelColor(newPt), newPt);
+      txn.update(oldPixel);
 
       updateBuffer(whitePixel);
     }
@@ -984,7 +990,7 @@ Canvas::move(
     int i;
     wxPoint newPt;
     Color clr;
-    Pixel pixel, oldPixel, newPixel, p;
+    Pixel pixel, newPixel, p;
     for (i=0; i < selectionArea.size(); i++) {
       pixel = selectionArea[i];
       clr = pixel.color;
@@ -992,8 +998,6 @@ Canvas::move(
       newPt = wxPoint(
           pixel.x + xOffset,
           pixel.y + yOffset);
-      oldPixel = Pixel(getPixelColor(newPt), newPt);
-      txn.update(oldPixel);
       newPixel = Pixel(clr, newPt);
 
       updateBuffer(newPixel);
