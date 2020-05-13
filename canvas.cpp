@@ -6,6 +6,8 @@
 #include <wx/wx.h>
 #include <wx/clipbrd.h>
 #include <wx/bitmap.h>
+#include <wx/rawbmp.h>
+
 #endif
 
 #include <unordered_set>
@@ -457,7 +459,7 @@ void Canvas::mouseDown(wxMouseEvent &evt)
       break;
     case Lasso:
       freehand.clear();
-      freehand.push_back(wxPoint(x, y));
+      handleSelectionClick(startPos);
       break;
     default:
       break;
@@ -531,6 +533,7 @@ void Canvas::mouseReleased(wxMouseEvent &evt)
   switch (toolType) {
     case SlctRect:
     case SlctCircle:
+    case Lasso:
       handleSelectionRelease(startPos, pt);
       wxWindow::Refresh();
       break;
@@ -896,7 +899,22 @@ Canvas::getSelectionArea(
     std::vector<Pixel> &selectionArea,
     LassoSelection *selection)
 {
-  // TODO
+  int minX, maxX, minY, maxY;
+  minX = selection->minX;
+  maxX = selection->maxX;
+  minY = selection->minY;
+  maxY = selection->maxY;
+
+  int x, y;
+  wxPoint pt;
+  for (x=minX+1; x < maxX; x++) {
+    for (y=minY+1; y < maxY; y++) {
+      pt = wxPoint(x, y);
+      if (selection->isWithinBounds(pt)) {
+        selectionArea.push_back(getPixel(pt));
+      }
+    }
+  }
 }
 
 /*
@@ -951,14 +969,6 @@ Canvas::handleSelectionRelease(const wxPoint &p0, const wxPoint &p1)
    *      Clear the selection.
    */
   if (selected) {
-    int xOffset = p1.x - p0.x;
-    int yOffset = p1.y - p0.y;
-
-    int i, x, y;
-    for (i=0; i < selectionBorder.size(); i++) {
-      selectionBorder[i].x += xOffset;
-      selectionBorder[i].y += yOffset;
-    }
     clearSelection();
   }
   else {
@@ -971,6 +981,7 @@ Canvas::handleSelectionRelease(const wxPoint &p0, const wxPoint &p1)
      * We get the border pixels from the selectTxn
      * because selectTxn has the original colours.
      */
+    std::vector<wxPoint> interp = lerp(p0, p1, 1);
     switch (toolType) {
       case SlctRect:
         selection = new RectangleSelection(p0, p1);
@@ -983,6 +994,20 @@ Canvas::handleSelectionRelease(const wxPoint &p0, const wxPoint &p1)
             dynamic_cast<CircleSelection *>(selection));
         break;
       case Lasso:
+        /*
+         * Have to connect the start and end mouse
+         * positions to create a closed polygon shape.
+         * Since the border is changed, we also
+         * have to update selectTxn which is in charge
+         * of reverting the border once the user
+         * completes translation (on mouse release).
+         */
+        selectionBorder.insert(selectionBorder.end(),
+            interp.begin(), interp.end());
+        updateTransaction(selectTxn, interp);
+        selection = new LassoSelection(p0, p1, selectionBorder);
+        getSelectionArea(selectionArea,
+            dynamic_cast<LassoSelection *>(selection));
         break;
       default:
         break;
@@ -1072,7 +1097,6 @@ Canvas::move(
     std::vector<wxPoint> border;
     border.resize(selectionBorder.size());
 
-    assert(selectionBorder.size() == selectTxn.pixels.size());
     for (i=0; i < selectionBorder.size(); i++) {
       pt = selectionBorder[i];
       newPt = wxPoint(pt.x + xOffset, pt.y + yOffset);
@@ -1082,32 +1106,5 @@ Canvas::move(
 
     /* draw border */
     updateBuffer(makeDashed(border), SELECT);
-  }
-}
-
-void Canvas::translatePixels(const std::vector<Pixel> &pixels,
-    const int &xOff, const int &yOff)
-{
-  int i;
-  wxPoint newPt;
-  Pixel p, newPixel;
-  for (i=0; i < pixels.size(); i++) {
-    p = pixels[i];
-
-    newPt = wxPoint(p.x + xOff, p.y + yOff);
-    newPixel = Pixel(p.color, newPt);
-    updateBuffer(newPixel);
-  }
-}
-
-void Canvas::whiteOutPixels(const std::vector<Pixel> &pixels)
-{
-  int i;
-  Pixel p;
-  wxPoint pt;
-  for (i=0; i < pixels.size(); i++) {
-    pt = wxPoint(pixels[i].x, pixels[i].y);
-    p = Pixel(WHITE, pt);
-    updateBuffer(p);
   }
 }

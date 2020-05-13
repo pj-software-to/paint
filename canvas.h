@@ -123,9 +123,6 @@ class Canvas : public wxPanel {
 
     void move(const std::vector<Pixel> &pixels,
         const int &xOffset, const int &yOffset, Transaction &txn);
-    void whiteOutPixels(const std::vector<Pixel> &pixels);
-    void translatePixels(const std::vector<Pixel> &pixels,
-                               const int &xOff, const int &yOff);
 
 public:
     Canvas(wxFrame *parent);

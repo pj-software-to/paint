@@ -5,8 +5,11 @@
 #ifndef PAINT_SELECTION_H
 #define PAINT_SELECTION_H
 
+#include <limits>
+
 #include "pixel.h"
 #include "helper.h"
+#include "interpolation.h"
 
 /*
  * Base class that contains fcn isWithinBounds()
@@ -61,9 +64,11 @@ public:
 
 class LassoSelection : public Selection {
 public:
+  int n;
   std::vector<wxPoint> border;
 
-  inline LassoSelection(std::vector<wxPoint> &_border);
+  inline LassoSelection(wxPoint p0, wxPoint p1,
+      std::vector<wxPoint> &_border);
 
   inline bool isWithinBounds(wxPoint &point);
 };
@@ -112,4 +117,40 @@ inline bool CircleSelection::isWithinBounds(wxPoint &point)
 {
   return (squaredLength(point, _c) < _r*_r);
 }
+
+/************** LassoSelection ****************/
+inline LassoSelection::LassoSelection(wxPoint p0, wxPoint p1,
+    std::vector <wxPoint> &_border)
+{
+  border = _border;
+  n = border.size();
+  int i=0;
+  minX = std::numeric_limits<int>::max();
+  minY = std::numeric_limits<int>::max();
+  maxX = -1;
+  maxY = -1;
+  for (i=0; i < n; i++) {
+    minX = std::min(minX, border[i].x);
+    minY = std::min(minY, border[i].y);
+    maxX = std::max(maxX, border[i].x);
+    maxY = std::max(maxY, border[i].y);
+  }
+}
+
+inline bool LassoSelection::isWithinBounds(wxPoint &point) {
+  int i, j, x, y;
+  x = point.x;
+  y = point.y;
+  bool c = false;
+  for (i=0, j=n-1; i < n; i++) {
+    if (((border[i].y > y) != (border[j].y > y))
+      && ((x < border[i].x + (border[j].x - border[i].x) *
+            (y - border[i].y) / (border[j].y - border[i].y)))) {
+      c = !c;
+    }
+    j = i;
+  };
+  return c;
+}
+
 #endif //PAINT_SELECTION_H
