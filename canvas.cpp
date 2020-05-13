@@ -813,14 +813,16 @@ void Canvas::clearSelection() {
   selectionBorder.clear();
   revertTransaction(selectTxn);
   selectTxn.pixels.clear();
-  delete selection;
-  selection = NULL;
+  if (selection != NULL) {
+    delete selection;
+    selection = NULL;
+  }
 }
 
 void
 Canvas::handleSelectionClick(wxPoint &pt)
 {
-  if (!selected) {
+  if (!selected || selection == NULL) {
     return;
   }
   if (!selection->isWithinBounds(pt)) {

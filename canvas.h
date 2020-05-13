@@ -52,10 +52,10 @@ class Canvas : public wxPanel {
     Transaction selectTxn;
 
     /* Selection tool fields */
-    bool selected;
+    bool selected = false;
     std::vector<Pixel> selectionArea;
     std::vector<wxPoint> selectionBorder;
-    Selection *selection;
+    Selection *selection = NULL;
 
     /* Sampled points for freehand */
     std::vector<wxPoint> freehand;
