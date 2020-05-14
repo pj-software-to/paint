@@ -286,7 +286,11 @@ bool Canvas::pasteFromClip(Transaction &txn) {
         }
       }
 
-      selectionBorder = drawRectangle()
+      wxPoint tl, br;
+      tl = wxPoint(0, 0);
+      br = wxPoint(std::min(width, M), std::min(height, N)); 
+      selectionBorder = drawRectangle(tl, br, 1);
+      selected = true;
     } 
     /* 
      * Add more options here:
@@ -743,7 +747,7 @@ Canvas::fill(const wxPoint &p, const Color &color, Transaction &txn) {
 }
 
 std::vector<wxPoint>
-Canvas::drawRectangle(const wxPoint &tl, const wxPoint &br)
+Canvas::drawRectangle(const wxPoint &tl, const wxPoint &br, const int &w)
 {
   /* 
    * tl
@@ -758,6 +762,24 @@ Canvas::drawRectangle(const wxPoint &tl, const wxPoint &br)
   std::vector<wxPoint> points;
   wxPoint p0, p1, p2, p3;
 
+  auto insert = [&points, &w](wxPoint &from, wxPoint &to)
+  {
+    std::vector<wxPoint> line;
+    line = lerp(from, to, w);
+    points.insert(points.end(), line.begin(), line.end());
+  };
+
+  p0 = wxPoint(tl.x, br.y);
+  p1 = wxPoint(br.x, br.y);
+  p2 = wxPoint(br.x, tl.y);
+  p3 = wxPoint(tl.x, tl.y);
+
+  insert(p0, p1);
+  insert(p1, p2);
+  insert(p2, p3);
+  insert(p3, p0);
+
+  return points; 
 }
 
 std::vector<wxPoint>
