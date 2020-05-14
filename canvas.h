@@ -104,6 +104,7 @@ class Canvas : public wxPanel {
 
     std::vector<wxPoint> drawFreeHand(const wxPoint &currPos, Transaction &txn, const int &_width);
     std::vector<wxPoint> drawRectangle(const wxPoint &currPos, Transaction &txn, const int &_width);
+    std::vector<wxPoint> drawRectangle(const wxPoint &tl, const wxPoint &br);
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn, const int &_width);
     std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
     void fill(const wxPoint &p, const Color &color, Transaction &txn);

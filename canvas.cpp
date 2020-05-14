@@ -224,10 +224,24 @@ bool Canvas::pasteFromClip(Transaction &txn) {
        *     is transparent.
        * (4) Iterate through, add previous color to transactions,
        *     then update display buffer.
-       * 
+       * (5) Initialize selectionArea and selectionBorder:
+       *   - If previous selection exists, free it
+       *   - Initialize selectionArea to be the non-alpha pixels
+       *     pasted from clipboard.
+       *   - For simplicity, set border to the bounding box
+       *     (i.e. for Lasso, border would not be tightly 
+       *     bounded like it is during the actual selection).
+       *     This should not affect the actual pixels being
+       *     moved if the user performs click-drag since
+       *     selectionArea is still strictly based on the area
+       *     selected by the user (and not, say, the bounding
+       *     box)
+       *  
        * Note: Could try and optimize using memset, this
        * requires changes to the transaction system.
        */
+      clearSelection();
+
       wxImage bmpImage;
       wxBitmapDataObject data;
 
@@ -267,9 +281,12 @@ bool Canvas::pasteFromClip(Transaction &txn) {
             txn.update(Pixel(prev_c, p));
 
             updateBuffer(pixel);
+            selectionArea.push_back(pixel);
           }
         }
       }
+
+      selectionBorder = drawRectangle()
     } 
     /* 
      * Add more options here:
@@ -726,6 +743,24 @@ Canvas::fill(const wxPoint &p, const Color &color, Transaction &txn) {
 }
 
 std::vector<wxPoint>
+Canvas::drawRectangle(const wxPoint &tl, const wxPoint &br)
+{
+  /* 
+   * tl
+   * p3                              p2
+   * |-------------------------------|
+   * |                               |
+   * |                               | 
+   * |-------------------------------|
+   * p0                              p1
+   *                                 br
+   */
+  std::vector<wxPoint> points;
+  wxPoint p0, p1, p2, p3;
+
+}
+
+std::vector<wxPoint>
 Canvas::drawRectangle(const wxPoint &p1, Transaction &txn, const int &_width)
 {
   /*
@@ -888,8 +923,7 @@ Canvas::getSelectionArea(
     for (y=minY; y < maxY; y++) {
       pt = wxPoint(x, y);
       if (squaredLength(pt, c) < r*r) {
-        selectionArea.push_back(
-            getPixel(pt));
+        selectionArea.push_back(getPixel(pt));
       }
     }
   }
