@@ -267,7 +267,9 @@ bool Canvas::pasteFromClip(Transaction &txn) {
       int i;
       for (i=0; i<selectionBorder.size(); i++) {
         wxPoint p = selectionBorder[i];
-        selectTxn.update(getPixel(p));
+        Pixel pixel = getPixel(p);
+        selectTxn.update(pixel);
+        selectionArea.push_back(pixel);
       }
 
       int x, y;
