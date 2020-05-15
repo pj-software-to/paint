@@ -212,36 +212,37 @@ void Canvas::render(wxDC&  dc)
 }
 
 bool Canvas::pasteFromClip(Transaction &txn) {
+  bool isPasted = false;
   if (wxTheClipboard->Open()) {
+    /*
+     * Copy bitmap / image:
+     * (1) Read and cast clipboard bitmap as wxImage
+     * (2) Get wxImage's internal data buffer which contains
+     *     RGBRGBRGB.. data format of pixels, row major. 
+     * (3) Check corresponding alpha values for each pixel.
+     *     If alpha value of pixel is NOT 0 (i.e. not completely
+     *     transparent), then copy that pixel's RGB.
+     *     If alpha value of pixel is 0, then ignore pixel, as
+     *     is transparent.
+     * (4) Iterate through, add previous color to transactions,
+     *     then update display buffer.
+     * (5) Initialize selectionArea and selectionBorder:
+     *   - If previous selection exists, free it
+     *   - Initialize selectionArea to be the non-alpha pixels
+     *     pasted from clipboard.
+     *   - For simplicity, set border to the bounding box
+     *     (i.e. for Lasso, border would not be tightly 
+     *     bounded like it is during the actual selection).
+     *     This should not affect the actual pixels being
+     *     moved if the user performs click-drag since
+     *     selectionArea is still strictly based on the area
+     *     selected by the user (and not, say, the bounding
+     *     box)
+     *  
+     * Note: Could try and optimize using memset, this
+     * requires changes to the transaction system.
+     */
     if (wxTheClipboard->IsSupported(wxDF_BITMAP)) {
-      /*
-       * Copy bitmap / image:
-       * (1) Read and cast clipboard bitmap as wxImage
-       * (2) Get wxImage's internal data buffer which contains
-       *     RGBRGBRGB.. data format of pixels, row major. 
-       * (3) Check corresponding alpha values for each pixel.
-       *     If alpha value of pixel is NOT 0 (i.e. not completely
-       *     transparent), then copy that pixel's RGB.
-       *     If alpha value of pixel is 0, then ignore pixel, as
-       *     is transparent.
-       * (4) Iterate through, add previous color to transactions,
-       *     then update display buffer.
-       * (5) Initialize selectionArea and selectionBorder:
-       *   - If previous selection exists, free it
-       *   - Initialize selectionArea to be the non-alpha pixels
-       *     pasted from clipboard.
-       *   - For simplicity, set border to the bounding box
-       *     (i.e. for Lasso, border would not be tightly 
-       *     bounded like it is during the actual selection).
-       *     This should not affect the actual pixels being
-       *     moved if the user performs click-drag since
-       *     selectionArea is still strictly based on the area
-       *     selected by the user (and not, say, the bounding
-       *     box)
-       *  
-       * Note: Could try and optimize using memset, this
-       * requires changes to the transaction system.
-       */
       clearSelection();
 
       wxImage bmpImage;
@@ -302,6 +303,8 @@ bool Canvas::pasteFromClip(Transaction &txn) {
       selectBackgrnd.insert(txn);
       whiteoutSelect = false;
       selected = true;
+      toolType = SlctRect;
+      isPaste = true;
     } 
     /* 
      * Add more options here:
@@ -311,7 +314,9 @@ bool Canvas::pasteFromClip(Transaction &txn) {
     // Always close the clipboard
     wxTheClipboard->Close();
   }
+  return isPaste;
 }
+
  void Canvas::cpySelectToClip() {
   /* 
    * Alpha channel issue:
