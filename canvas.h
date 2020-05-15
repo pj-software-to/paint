@@ -108,7 +108,7 @@ class Canvas : public wxPanel {
     std::vector<wxPoint> drawRectangle(const wxPoint &currPos, Transaction &txn, const int &_width);
     std::vector<wxPoint> drawRectangle(const wxPoint &tl, const wxPoint &br, const int &_width);
     std::vector<wxPoint> drawCircle(const wxPoint &currPos, Transaction &txn, const int &_width);
-    std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn);
+    std::vector<wxPoint> drawLine(const wxPoint &currPos, Transaction &txn, const int &_width);
     void fill(const wxPoint &p, const Color &color, Transaction &txn);
 
     /* Event handlers for rectangle selection */
@@ -134,6 +134,9 @@ public:
 
     /* The colour selected by the user */
     Color color;
+
+    /* Line thickness for drawing tools */
+    int thiccness;
 
     /* Screen refresh event handlers */
     void paintEvent(wxPaintEvent & evt);

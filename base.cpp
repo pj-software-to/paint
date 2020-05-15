@@ -66,6 +66,9 @@ MainFrame::MainFrame(const wxString &title,
   std::string slctRectP = DPATH + "/slct_rect.png";
   std::string slctCircleP = DPATH + "/slct_circle.png";
   std::string lassoP = DPATH + "/lasso.png";
+  std::string thicc1P = DPATH + "/thicc1.png";
+  std::string thicc2P = DPATH + "/thicc2.png";
+  std::string thicc3P = DPATH + "/thicc3.png";
 
   wxImage::AddHandler(new wxPNGHandler);
   wxBitmap bucket(wxString(bucketP), wxBITMAP_TYPE_PNG);
@@ -77,6 +80,9 @@ MainFrame::MainFrame(const wxString &title,
   wxBitmap slctRect(wxString(slctRectP), wxBITMAP_TYPE_PNG);
   wxBitmap slctCircle(wxString(slctCircleP), wxBITMAP_TYPE_PNG);
   wxBitmap lasso(wxString(lassoP), wxBITMAP_TYPE_PNG);
+  wxBitmap thicc1(wxString(thicc1P), wxBITMAP_TYPE_PNG);
+  wxBitmap thicc2(wxString(thicc2P), wxBITMAP_TYPE_PNG);
+  wxBitmap thicc3(wxString(thicc3P), wxBITMAP_TYPE_PNG);
 
   toolBar = CreateToolBar(wxTB_VERTICAL);
 
@@ -94,6 +100,11 @@ MainFrame::MainFrame(const wxString &title,
   toolBar->AddTool(BTN_Slct_rect, wxT("Select Rectangle"), slctRect);
   toolBar->AddTool(BTN_Slct_circ, wxT("Select Circle"), slctCircle);
   toolBar->AddTool(BTN_Slct_lasso, wxT("Lasso"), lasso);
+
+  /* Line thiccness */
+  toolBar->AddTool(THICC_1, wxT("1 pixel"), thicc1);
+  toolBar->AddTool(THICC_2, wxT("3 pixels"), thicc2);
+  toolBar->AddTool(THICC_3, wxT("5 pixels"), thicc3);
 
   /* Colour picker */
   wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(
@@ -123,44 +134,58 @@ MainFrame::MainFrame(const wxString &title,
       wxCommandEventHandler(MainApp::SetCanvasSlctCircle));
   Connect(BTN_Slct_lasso, wxEVT_COMMAND_TOOL_CLICKED,
       wxCommandEventHandler(MainApp::SetCanvasLasso));
-
+  Connect(THICC_1, wxEVT_COMMAND_TOOL_CLICKED,
+      wxCommandEventHandler(MainApp::SetThiccness1));
+  Connect(THICC_2, wxEVT_COMMAND_TOOL_CLICKED,
+      wxCommandEventHandler(MainApp::SetThiccness2));
+  Connect(THICC_3, wxEVT_COMMAND_TOOL_CLICKED,
+      wxCommandEventHandler(MainApp::SetThiccness3));
 }
 
 /*********** Event handlers to handle ONCLICK events for toolbar ************/
 void MainApp::SetCanvasPencil(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = Pencil;
+  enableThiccness();
 }
 
 void MainApp::SetCanvasDrawLine(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = Line;
+  enableThiccness();
 }
 
 void MainApp::SetCanvasDrawRect(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = DrawRect;
+  enableThiccness();
 }
 
 void MainApp::SetCanvasDrawCircle(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = DrawCircle;
+  enableThiccness();
 }
 
 void MainApp::SetCanvasEraser(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = Eraser;
+  enableThiccness();
 }
 
 void MainApp::SetCanvasFill(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = Fill;
+  disableThiccness();
 }
 
 void MainApp::SetCanvasSlctRect(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = SlctRect;
+  disableThiccness();
 }
 
 void MainApp::SetCanvasSlctCircle(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = SlctCircle;
+  disableThiccness();
 }
 
 void MainApp::SetCanvasLasso(wxCommandEvent& WXUNUSED(event)) {
   wxGetApp().canvas->toolType = Lasso;
+  disableThiccness();
 }
 
 void MainApp::OnColourChanged(wxColourPickerEvent &evt) {
@@ -168,4 +193,31 @@ void MainApp::OnColourChanged(wxColourPickerEvent &evt) {
   wxGetApp().canvas->color = Color(clr.Red(),
       clr.Green(),
       clr.Blue());
+}
+
+void MainApp::SetThiccness1(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->thiccness = 1;
+}
+
+void MainApp::SetThiccness2(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->thiccness = 3;
+}
+
+void MainApp::SetThiccness3(wxCommandEvent& WXUNUSED(event)) {
+  wxGetApp().canvas->thiccness = 5;
+}
+
+void MainApp::enableThiccness() {
+  wxGetApp().frame->setThiccnessTool(true);
+}
+
+void MainApp::disableThiccness() {
+  wxGetApp().frame->setThiccnessTool(false);
+}
+
+void MainFrame::setThiccnessTool(bool enabled) {
+  toolBar->EnableTool(THICC_1, enabled);
+  toolBar->EnableTool(THICC_2, enabled);
+  toolBar->EnableTool(THICC_3, enabled);
+  toolBar->Realize();
 }

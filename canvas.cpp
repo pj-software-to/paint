@@ -43,6 +43,7 @@ Color SELECT = Color((char) 66, (char) 135, (char) 245);
 Canvas::Canvas(wxFrame *parent) :
 wxPanel(parent) {
   color = Color(0, 0, 0);
+  thiccness = 3;
 }
 
 Canvas::Canvas(wxFrame *parent, unsigned int width, unsigned int height) :
@@ -52,6 +53,7 @@ wxPanel(parent) {
   this->SetFocus();
 
   color = Color(0, 0, 0);
+  thiccness = 3;
 
   /* Initialize the buffer */
   size_t sz = 3*width*height*sizeof(char);
@@ -384,8 +386,6 @@ bool Canvas::pasteFromClip(Transaction &txn) {
     if (wxTheClipboard->Open()) {
       wxTheClipboard->SetData(new wxBitmapDataObject(bmp));
       wxTheClipboard->Close();
-      printf("Copied bitmap: %dx%d, hasAlpha=%d, depth=%d\n", N, M,
-        img.HasAlpha(), bmp.GetDepth());;
     } else {
       free(alpha);
     }    
@@ -509,32 +509,32 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
     case Pencil:
       freehand.push_back(currPos);
       updateBuffer(
-        drawFreeHand(currPos, txn, 5),
+        drawFreeHand(currPos, txn, thiccness),
         color);
       currentTxn = txn;
       break;
     case Line:
       updateBuffer(
-        drawLine(currPos, txn),
+        drawLine(currPos, txn, thiccness),
         color);
       currentTxn = txn;
       break;
     case DrawRect:
       updateBuffer(
-          drawRectangle(currPos, txn, 3),
+          drawRectangle(currPos, txn, thiccness),
           color);
       currentTxn = txn;
       break;
     case DrawCircle:
       updateBuffer(
-        drawCircle(currPos, txn, 5),
+        drawCircle(currPos, txn, thiccness),
         color);
       currentTxn = txn;
       break;
     case Eraser:
       freehand.push_back(currPos);
       updateBuffer(
-          drawFreeHand(currPos, txn, 5),
+          drawFreeHand(currPos, txn, thiccness),
           WHITE);
       currentTxn = txn;
       break;
@@ -679,7 +679,7 @@ Canvas::drawCircle(const wxPoint &currPos, Transaction &txn, const int &_width) 
 }
 
 std::vector<wxPoint> 
-Canvas::drawLine(const wxPoint &currPos, Transaction &txn) {
+Canvas::drawLine(const wxPoint &currPos, Transaction &txn, const int &_width) {
   std::vector<wxPoint> points; 
   /*
    * Steps:
@@ -690,7 +690,7 @@ Canvas::drawLine(const wxPoint &currPos, Transaction &txn) {
     revertTransaction(currentTxn);
   } 
 
-  points = lerp(startPos, currPos, 5);
+  points = lerp(startPos, currPos, _width);
   updateTransaction(txn, points);
 
   return points;
