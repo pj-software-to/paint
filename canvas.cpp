@@ -257,8 +257,16 @@ bool Canvas::pasteFromClip(Transaction &txn) {
       alpha = bmpImage.GetAlpha();
       hasAlpha = bmpImage.HasAlpha(); 
 
-      printf("Paste bitmap: %dx%d. Alpha: 0x%p\n", N, M, 
-        (void *)alpha);
+      wxPoint tl, br;
+      tl = wxPoint(0, 0);
+      br = wxPoint(std::min(width, M-1), std::min(height, N-1)); 
+      selectionBorder = drawRectangle(tl, br, 1);
+      int i;
+      for (i=0; i<selectionBorder.size(); i++) {
+        wxPoint p = selectionBorder[i];
+        selectTxn.update(getPixel(p));
+      }
+
       int x, y;
       for (y=0; y<std::min(height, N); y++) {
         for (x=0; x<std::min(width, M); x++) {
@@ -286,10 +294,11 @@ bool Canvas::pasteFromClip(Transaction &txn) {
         }
       }
 
-      wxPoint tl, br;
-      tl = wxPoint(0, 0);
-      br = wxPoint(std::min(width, M), std::min(height, N)); 
-      selectionBorder = drawRectangle(tl, br, 1);
+      updateBuffer(
+        makeDashed(selectionBorder),
+        SELECT);
+      selectBackgrnd.insert(txn);
+      whiteoutSelect = false;
       selected = true;
     } 
     /* 
@@ -866,10 +875,12 @@ void printPixels(std::vector<Pixel> pixels) {
  */
 void Canvas::clearSelection() {
   selected = false;
+  whiteoutSelect = true;
   selectionArea.clear();
   selectionBorder.clear();
   revertTransaction(selectTxn);
   selectTxn.pixels.clear();
+  selectBackgrnd.pixels.clear();
   if (selection != NULL) {
     delete selection;
     selection = NULL;
@@ -1116,16 +1127,21 @@ Canvas::move(
     }
   }
 
-  // (2) white out pixels
+  // (2) Option 1: whiteout pixels
+  //     Option 2: restore pixels to what's 'underneath'
   {
-    int i;
-    wxPoint oldPt, newPt;
-    Pixel pixel, whitePixel, oldPixel;
-    for (i=0; i < selectionArea.size(); i++) {
-      pixel = selectionArea[i];
-      oldPt = wxPoint(pixel.x, pixel.y);
-      whitePixel = Pixel(Color(255, 255, 255), oldPt);
-      updateBuffer(whitePixel);
+    if (whiteoutSelect) {
+      int i;
+      wxPoint oldPt, newPt;
+      Pixel pixel, whitePixel, oldPixel;
+      for (i=0; i < selectionArea.size(); i++) {
+        pixel = selectionArea[i];
+        oldPt = wxPoint(pixel.x, pixel.y);
+        whitePixel = Pixel(Color(255, 255, 255), oldPt);
+        updateBuffer(whitePixel);
+      }
+    } else {
+      revertTransaction(selectBackgrnd);
     }
   }
 

@@ -50,8 +50,10 @@ class Canvas : public wxPanel {
     bool isNewTxn;
     Transaction currentTxn;
     Transaction selectTxn;
+    Transaction selectBackgrnd;
 
     /* Selection tool fields */
+    bool whiteoutSelect = true;
     bool selected = false;
     std::vector<Pixel> selectionArea;
     std::vector<wxPoint> selectionBorder;
