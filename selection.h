@@ -124,6 +124,15 @@ inline LassoSelection::LassoSelection(wxPoint p0, wxPoint p1,
 {
   border = _border;
   n = border.size();
+
+  if (n == 0) {
+    minX = 0;
+    minY = 0;
+    maxX = 0;
+    maxY = 0;
+    return;
+  }
+
   int i=0;
   minX = std::numeric_limits<int>::max();
   minY = std::numeric_limits<int>::max();
