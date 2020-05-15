@@ -10,6 +10,7 @@ public:
   wxColourPickerCtrl *colorPicker;
 
   void OnColourChanged(wxColourPickerEvent &evt);
+  void setThiccnessTool(bool enabled);
 
   DECLARE_EVENT_TABLE()
 };
@@ -31,6 +32,12 @@ class MainApp: public wxApp {
     void SetCanvasSlctRect(wxCommandEvent& WXUNUSED(event));
     void SetCanvasSlctCircle(wxCommandEvent& WXUNUSED(event));
     void SetCanvasLasso(wxCommandEvent& WXUNUSED(event));
+    void SetThiccness1(wxCommandEvent& WXUNUSED(event));
+    void SetThiccness2(wxCommandEvent& WXUNUSED(event));
+    void SetThiccness3(wxCommandEvent& WXUNUSED(event));
+
+    void disableThiccness();
+    void enableThiccness();
 };
 
 DECLARE_APP(MainApp)
@@ -46,7 +53,10 @@ enum
   BTN_Slct_circ = wxID_HIGHEST + 7,
   BTN_Slct_lasso = wxID_HIGHEST + 8,
   BTN_Fill = wxID_HIGHEST + 9,
-  CLR_PICKER = wxID_HIGHEST + 10
+  CLR_PICKER = wxID_HIGHEST + 10,
+  THICC_1 = wxID_HIGHEST + 11,
+  THICC_2 = wxID_HIGHEST + 12,
+  THICC_3 = wxID_HIGHEST + 13
 };
 
 #endif
