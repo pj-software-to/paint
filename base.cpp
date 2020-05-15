@@ -57,12 +57,12 @@ MainFrame::MainFrame(const wxString &title,
 {
   /* Create sidebar with tools */
   std::string DPATH(DATA_PATH);
-  std::string bucketP = DPATH + "/bucket.png";
-  std::string pencilP = DPATH + "/pencil1.png";
+  std::string bucketP = DPATH + "/fill1.png";
+  std::string pencilP = DPATH + "/pencil.png";
   std::string circleP = DPATH + "/circle.png";
   std::string rectP = DPATH + "/rectangle.png";
   std::string lineP = DPATH + "/line.png";
-  std::string eraserP = DPATH + "/eraser.png";
+  std::string eraserP = DPATH + "/eraser1.png";
   std::string slctRectP = DPATH + "/slct_rect.png";
   std::string slctCircleP = DPATH + "/slct_circle.png";
   std::string lassoP = DPATH + "/lasso.png";
@@ -100,6 +100,8 @@ MainFrame::MainFrame(const wxString &title,
   toolBar->AddTool(BTN_Slct_rect, wxT("Select Rectangle"), slctRect);
   toolBar->AddTool(BTN_Slct_circ, wxT("Select Circle"), slctCircle);
   toolBar->AddTool(BTN_Slct_lasso, wxT("Lasso"), lasso);
+    
+  toolBar->AddSeparator();
 
   /* Line thiccness */
   toolBar->AddTool(THICC_1, wxT("1 pixel"), thicc1);
@@ -108,7 +110,7 @@ MainFrame::MainFrame(const wxString &title,
 
   /* Colour picker */
   wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(
-      toolBar, CLR_PICKER, *wxBLACK, wxDefaultPosition, wxDefaultSize,
+      toolBar, CLR_PICKER, *wxBLACK, wxDefaultPosition, wxSize(40, 40),
       wxCLRP_DEFAULT_STYLE, wxDefaultValidator, wxEmptyString);
   toolBar->AddControl(colourPickerCtrl);
 
