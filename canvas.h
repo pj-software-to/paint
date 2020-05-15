@@ -35,13 +35,17 @@ class Canvas : public wxPanel {
     unsigned int width;
     unsigned int height;
 
-    /* The previous mouse position
-     * before mouse move event */
-    wxPoint prevPos;
+    /* Used to hold temporary width while the
+     * user resizes the canvas*/
+    unsigned int resizeWidth;
+    unsigned int resizeHeight;
 
     /* The mouse position where the user first
      * clicked the left mouse button*/
     wxPoint startPos;
+
+    /* TRUE if the user is resizing the canvas */
+    bool isResize;
 
     /* Holds the transaction currently
      * taking place.
@@ -126,6 +130,10 @@ class Canvas : public wxPanel {
 
     void move(const std::vector<Pixel> &pixels,
         const int &xOffset, const int &yOffset, Transaction &txn);
+
+    /* handle resize events */
+    bool isResizeEvt(const int &x, const int &y);
+    void moveBuffer();
 
 public:
     Canvas(wxFrame *parent);

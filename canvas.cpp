@@ -22,6 +22,8 @@
 #include "interpolation.h"
 #include "selection.h"
 
+#define RESIZE_CTRL_LENGTH 10
+
 #define LOC(x,y,w) (3*((y)*(w)+(x)))
 #define ALPHA_LOC(x,y,w) ((y)*(w)+(x))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
@@ -44,6 +46,7 @@ Canvas::Canvas(wxFrame *parent) :
 wxPanel(parent) {
   color = Color(0, 0, 0);
   thiccness = 3;
+  isResize = false;
 }
 
 Canvas::Canvas(wxFrame *parent, unsigned int width, unsigned int height) :
@@ -52,8 +55,12 @@ wxPanel(parent) {
   this->height = height;
   this->SetFocus();
 
+  resizeWidth = width;
+  resizeHeight = height;
+
   color = Color(0, 0, 0);
   thiccness = 3;
+  isResize = false;
 
   /* Initialize the buffer */
   size_t sz = 3*width*height*sizeof(char);
@@ -203,11 +210,19 @@ void Canvas::render(wxDC&  dc)
   /*
    * Draw out the bitmap
    */
-  
   ////////////////////////////////////
   wxImage img(width, height, (unsigned char *)Buffer, true);
   wxBitmap bmp(img);  
   dc.DrawBitmap(bmp, 0, 0, false);
+
+  dc.SetBrush(*wxTRANSPARENT_BRUSH);
+  dc.SetPen( wxPen( wxColor(0, 0, 0), 1) ); // 10-pixels-thick pink outline
+  dc.DrawRectangle( 0, 0, resizeWidth, resizeHeight );
+
+  dc.SetBrush(*wxBLACK_BRUSH);
+  dc.SetPen(wxPen(wxColor(0, 0, 0), 1));
+  dc.DrawRectangle(resizeWidth-RESIZE_CTRL_LENGTH/2, resizeHeight-RESIZE_CTRL_LENGTH/2,
+      RESIZE_CTRL_LENGTH, RESIZE_CTRL_LENGTH);
   ///////////////////////////////////
 }
 
@@ -454,6 +469,13 @@ void Canvas::keyUpEvent(wxKeyEvent & evt) {
   }
 }
 
+bool Canvas::isResizeEvt(const int &x, const int &y) {
+  return ((x >= width - RESIZE_CTRL_LENGTH/2) &&
+      (x <= width + RESIZE_CTRL_LENGTH) &&
+      (y >= height - RESIZE_CTRL_LENGTH/2) &&
+      (y <= height + RESIZE_CTRL_LENGTH));
+}
+
 /* Event handlers to handle CANVAS mouse events */
 /*
  * Handle CLICK event
@@ -470,8 +492,13 @@ void Canvas::mouseDown(wxMouseEvent &evt)
   isNewTxn = true;
   int x = evt.GetX();
   int y = evt.GetY();
-  prevPos = wxPoint(x, y);
   startPos = wxPoint(x, y);
+
+  if ((isResize = isResizeEvt(x, y))) {
+    resizeWidth = width;
+    resizeHeight = height;
+    return;
+  }
 
   Transaction txn;
   Pixel p(color.r, color.g, color.b, x, y);
@@ -512,6 +539,14 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
 
   wxPoint currPos = wxPoint(evt.GetX(), evt.GetY());
   Transaction txn;
+
+  if (isResize) {
+    resizeWidth = width + currPos.x - startPos.x;
+    resizeHeight = height + currPos.y - startPos.y;
+    wxWindow::Refresh();
+    return;
+  }
+
   switch(toolType) {
     case Pencil:
       freehand.push_back(currPos);
@@ -560,13 +595,46 @@ void Canvas::mouseMoved(wxMouseEvent &evt)
   }
 
   wxWindow::Refresh();
-  prevPos = wxPoint(currPos.x, currPos.y);
   isNewTxn = false;
+}
+
+/*
+ * Resizes buffer. Copies over pixels
+ * from previous buffer into a temp
+ * buffer containing resizeWidth * resizeHeight
+ * pixels.
+ */
+void Canvas::moveBuffer() {
+  char *tempBuff = (char*) malloc(3*resizeWidth*resizeHeight);
+  memset(tempBuff, 255, 3*resizeWidth*resizeHeight);
+
+  char *src, *dst;
+  size_t size = MIN(width, resizeWidth);
+  int i, _height = MIN(height, resizeHeight);
+  for (i=0; i < _height; i++) {
+    src = Buffer + LOC(0, i, width);
+    dst = tempBuff + LOC(0, i, resizeWidth);
+
+    memmove(dst, src, size*3);
+  }
+
+  isResize = false;
+  width = resizeWidth;
+  height = resizeHeight;
+  free(Buffer);
+  Buffer = tempBuff;
 }
 
 void Canvas::mouseReleased(wxMouseEvent &evt)
 {
   wxPoint pt = wxPoint(evt.GetX(), evt.GetY());
+
+  if (isResize) {
+    moveBuffer();
+    wxWindow::Refresh();
+    return;
+  }
+
   switch (toolType) {
     case SlctRect:
     case SlctCircle:
