@@ -445,6 +445,7 @@ void Canvas::selectAll(Transaction &txn) {
   updateBuffer(
     makeDashed(selectionBorder),
     SELECT);
+  selection = new RectangleSelection(tl, br);
   selectBackgrnd.insert(txn);
   whiteoutSelect = true;
   selected = true;
