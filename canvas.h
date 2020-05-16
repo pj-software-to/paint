@@ -47,7 +47,7 @@ class Canvas : public wxPanel {
     wxPoint startPos;
 
     /* TRUE if the user is resizing the canvas */
-    bool isResize;
+    bool isResize = false;
 
     /* Holds the transaction currently
      * taking place.

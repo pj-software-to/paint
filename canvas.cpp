@@ -215,9 +215,11 @@ void Canvas::render(wxDC&  dc)
   wxBitmap bmp(img);  
   dc.DrawBitmap(bmp, 0, 0, false);
 
-  dc.SetBrush(*wxTRANSPARENT_BRUSH);
-  dc.SetPen( wxPen( wxColor(0, 0, 0), 1) ); // 10-pixels-thick pink outline
-  dc.DrawRectangle( 0, 0, resizeWidth, resizeHeight );
+  if (isResize) {
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.SetPen( wxPen( wxColor(0, 0, 0), 1) ); // 10-pixels-thick pink outline
+    dc.DrawRectangle( 0, 0, resizeWidth, resizeHeight );
+  }
 
   dc.SetBrush(*wxBLACK_BRUSH);
   dc.SetPen(wxPen(wxColor(0, 0, 0), 1));
@@ -420,7 +422,7 @@ void Canvas::selectAll(Transaction &txn) {
   selectionArea.resize(width*height);
   wxPoint tl, br;
   tl = wxPoint(0, 0);
-  br = wxPoint(width, height); 
+  br = wxPoint(width-1, height-1); 
   selectionBorder = drawRectangle(tl, br, 1);
   int i;
   for (i=0; i<selectionBorder.size(); i++) {
@@ -466,7 +468,7 @@ bool Canvas::clearSelectedArea(Transaction &txn, Color c) {
     txn.update(pixel);
     updateBuffer(_pixel);
   }
-  
+
   return true;
 }
 
