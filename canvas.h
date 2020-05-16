@@ -26,7 +26,9 @@ enum KEY_PRESS
 {
   KEY_Z = 90,
   KEY_C = 67,
-  KEY_V = 86
+  KEY_V = 86,
+  KEY_A = 65,
+  KEY_DEL = 127
 };
 
 class Canvas : public wxPanel {
@@ -91,6 +93,8 @@ class Canvas : public wxPanel {
     bool isUndo = false;
     bool isCopy = false;
     bool isPaste = false;
+    bool isSelectAll = false;
+    bool isDelete = false;
 
     /*
      * Private functions
@@ -107,6 +111,8 @@ class Canvas : public wxPanel {
 
     bool pasteFromClip(Transaction &txn);
     void cpySelectToClip();
+    void selectAll(Transaction &txn);
+    bool clearSelectedArea(Transaction &txn, Color c);
 
     std::vector<wxPoint> drawFreeHand(const wxPoint &currPos, Transaction &txn, const int &_width);
     std::vector<wxPoint> drawRectangle(const wxPoint &currPos, Transaction &txn, const int &_width);

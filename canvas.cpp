@@ -414,6 +414,62 @@ bool Canvas::pasteFromClip(Transaction &txn) {
   }
 }
 
+void Canvas::selectAll(Transaction &txn) {
+  clearSelection();
+
+  selectionArea.resize(width*height);
+  wxPoint tl, br;
+  tl = wxPoint(0, 0);
+  br = wxPoint(width, height); 
+  selectionBorder = drawRectangle(tl, br, 1);
+  int i;
+  for (i=0; i<selectionBorder.size(); i++) {
+    wxPoint p = selectionBorder[i];
+    selectTxn.update(getPixel(p));
+  }
+
+  int x, y;
+  for (y=0; y<height; y++) {
+    for (x=0; x<width; x++) {
+      wxPoint p(x,y);
+      Color prev_c = getPixelColor(p); /* prev color */
+      Pixel pixel = Pixel(prev_c, p);
+      txn.update(pixel);
+
+      selectionArea[y*width + x] = pixel;
+    }
+  }
+
+  updateBuffer(
+    makeDashed(selectionBorder),
+    SELECT);
+  selectBackgrnd.insert(txn);
+  whiteoutSelect = true;
+  selected = true;
+  toolType = SlctRect;
+  isPaste = true;
+}
+
+bool Canvas::clearSelectedArea(Transaction &txn, Color c) {
+  if (!selected) {
+    return false;
+  }
+
+  wxPoint p; 
+  Pixel pixel, _pixel;
+  int i;
+  for (i=0; i<selectionArea.size(); i++) {
+    pixel = selectionArea[i];
+    p = wxPoint(pixel.x, pixel.y);
+
+    _pixel = Pixel(c, p);
+    txn.update(pixel);
+    updateBuffer(_pixel);
+  }
+  
+  return true;
+}
+
 void Canvas::keyDownEvent(wxKeyEvent &evt) {
   char uc = evt.GetUnicodeKey();
   if (evt.ControlDown()) {
@@ -444,10 +500,29 @@ void Canvas::keyDownEvent(wxKeyEvent &evt) {
           }
         }
         break;
+      case (KEY_A):
+        if (!isSelectAll) {
+          Transaction txn;
+          selectAll(txn);
+          currentTxn = txn;
+        }
       default: 
         break;
     }
   }
+
+  if (uc == KEY_DEL) {
+    if (!isDelete) {
+      isDelete = true;
+      Transaction txn;
+      if (clearSelectedArea(txn, Color(255, 255, 255))) {
+        clearSelection();
+        currentTxn = txn;
+        addTransaction(currentTxn);
+      } 
+    }
+  }
+
   wxWindow::Refresh();
 }
 
@@ -463,6 +538,12 @@ void Canvas::keyUpEvent(wxKeyEvent & evt) {
       break;
     case (KEY_V):
       isPaste = false;
+      break;
+    case (KEY_A):
+      isSelectAll = false;
+      break;
+    case (KEY_DEL):
+      isDelete = false;
       break;
     default:
       break; 
